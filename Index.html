@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Windows 11 Media Studio</title>
+    <!-- HLS.js (M3U8 TV 스트림 재생) -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+      :root {
+        --win-bg: rgba(243, 243, 243, 0.88);
+        --win-border: rgba(0, 0, 0, 0.08);
+        --accent-color: #0067c0;
+        --accent-hover: #1875d1;
+        --btn-bg: #ffffff;
+        --btn-hover: #f6f6f6;
+        --text-primary: #1a1a1a;
+        --text-secondary: #5f5f5f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          'Segoe UI Variable Text', 'Segoe UI', Tahoma, Geneva, Verdana,
+          sans-serif;
+        background: radial-gradient(circle at top left, #cbe2ff, #2b589c);
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px 10px;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        color: var(--text-primary);
+      }
+
+      .win11-window {
+        width: 100%;
+        max-width: 560px;
+        background: var(--win-bg);
+        backdrop-filter: blur(25px) saturate(180%);
+        -webkit-backdrop-filter: blur(25px) saturate(180%);
+        border-radius: 12px;
+        border: 1px solid var(--win-border);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.22);
+        overflow: hidden;
+      }
+
+      .win-header {
+        height: 40px;
+        background: rgba(255, 255, 255, 0.4);
+        border-bottom: 1px solid var(--win-border);
+        padding: 0 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        user-select: none;
+      }
+
+      .win-title {
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .win-btn-close {
+        width: 28px;
+        height: 24px;
+        border: none;
+        background: transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+      }
+
+      .win-btn-close:hover {
+        background: #e81123;
+        color: #ffffff;
+      }
+
+      .tab-bar {
+        display: flex;
+        background: rgba(0, 0, 0, 0.03);
+        padding: 6px;
+        gap: 6px;
+        border-bottom: 1px solid var(--win-border);
+      }
+
+      .tab-btn {
+        flex: 1;
+        padding: 8px;
+        border: none;
+        background: transparent;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .tab-btn.active {
+        background: #ffffff;
+        color: var(--accent-color);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      }
+
+      .win-body {
+        padding: 14px;
+      }
+      .view-panel {
+        display: none;
+      }
+      .view-panel.active {
+        display: block;
+      }
+
+      .input-group {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+
+      input[type='text'],
+      select {
+        padding: 8px 10px;
+        font-size: 12px;
+        border: 1px solid var(--win-border);
+        border-radius: 6px;
+        background: #ffffff;
+        outline: none;
+        flex: 1;
+        min-width: 140px;
+      }
+
+      .btn {
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid var(--win-border);
+        background: var(--btn-bg);
+        color: var(--text-primary);
+        cursor: pointer;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+      }
+
+      .btn:hover {
+        background: var(--btn-hover);
+      }
+
+      .btn-accent {
+        background: var(--accent-color);
+        color: #ffffff;
+        border: none;
+      }
+
+      .btn-accent:hover {
+        background: var(--accent-hover);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      #radio-list {
+        height: 100px;
+        overflow-y: auto;
+        background: #ffffff;
+        border: 1px solid var(--win-border);
+        border-radius: 8px;
+        padding: 4px;
+        margin-bottom: 8px;
+      }
+
+      .station-item {
+        padding: 6px 8px;
+        font-size: 12px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .station-item:hover {
+        background: #eef5ff;
+        color: var(--accent-color);
+        font-weight: 600;
+      }
+
+      .status-badge {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent-color);
+        margin: 4px 0;
+      }
+
+      audio {
+        width: 100%;
+        margin-top: 4px;
+      }
+
+      #spectrum {
+        width: 100%;
+        height: 120px;
+        background: #0d0d0d;
+        border-radius: 8px;
+        margin-top: 8px;
+      }
+
+      video {
+        width: 100%;
+        height: 260px;
+        border-radius: 8px;
+        background: #000000;
+        margin-top: 6px;
+      }
+
+      .control-card {
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid var(--win-border);
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 10px;
+      }
+
+      .card-title {
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: var(--text-secondary);
+      }
+
+      .ad-banner {
+        margin-top: 12px;
+        padding: 12px;
+        background: linear-gradient(135deg, #003580, #0056b3);
+        color: #ffffff;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-decoration: none;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        transition: transform 0.2s;
+      }
+
+      .ad-banner:hover {
+        transform: translateY(-2px);
+      }
+      .ad-text {
+        font-size: 12px;
+      }
+      .ad-title {
+        font-weight: bold;
+        font-size: 13px;
+        margin-bottom: 2px;
+      }
+      .ad-badge {
+        background: #ff9500;
+        color: #fff;
+        font-size: 11px;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+      }
+
+      @media (max-width: 480px) {
+        body {
+          padding: 5px;
+        }
+        .win11-window {
+          border-radius: 8px;
+        }
+        .win-body {
+          padding: 10px;
+        }
+        video {
+          height: 200px;
+        }
+        #spectrum {
+          height: 90px;
+        }
+        .input-group {
+          flex-direction: column;
+        }
+        input[type='text'],
+        select,
+        .btn {
+          width: 100%;
+        }
+        .ad-banner {
+          flex-direction: column;
+          gap: 8px;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="win11-window" id="main-window">
+      <div class="win-header">
+        <div class="win-title">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="2" y="3" width="20" height="14" rx="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          Windows 11 Media Studio
+        </div>
+        <button
+          class="win-btn-close"
+          onclick="
+            document.getElementById('main-window').style.display = 'none'
+          "
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="tab-bar">
+        <button
+          class="tab-btn active"
+          id="tab-radio"
+          onclick="switchTab('radio')"
+        >
+          📻 라디오 방송
+        </button>
+        <button class="tab-btn" id="tab-video" onclick="switchTab('video')">
+          📺 실시간 TV / 영화
+        </button>
+      </div>
+
+      <div class="win-body">
+        <!-- RADIO VIEW PANEL -->
+        <div class="view-panel active" id="panel-radio">
+          <div class="input-group">
+            <select id="radio-preset" onchange="selectRadioChannel(this.value)">
+              <option value="">-- 대표 라디오 채널 선택 --</option>
+              <optgroup label="🇰🇷 한국 주요 라디오">
+                <option value="KBS">KBS 라디오 (1FM / 2FM / 1라디오)</option>
+                <option value="MBC">MBC 라디오 (표준FM / FM4U)</option>
+                <option value="SBS">SBS 파워FM / 러브FM</option>
+                <option value="CBS">CBS 기독교방송</option>
+                <option value="BBS">BBS 불교방송</option>
+                <option value="FEBC">FEBC 극동방송</option>
+                <option value="CPBC">CPBC 가톨릭평화방송</option>
+                <option value="tbs">tbs 교통방송</option>
+              </optgroup>
+              <optgroup label="🌐 해외 주요 도시">
+                <option value="Seattle">🇺🇸 시애틀 (Seattle)</option>
+                <option value="Seoul">🇰🇷 서울 전체 (Seoul)</option>
+                <option value="Berlin">🇩🇪 베를린 (Berlin)</option>
+                <option value="Tokyo">🇯🇵 도쿄 (Tokyo)</option>
+                <option value="London">🇬🇧 런던 (London)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <input
+              id="radio-kw"
+              type="text"
+              value="KBS"
+              placeholder="방송국/키워드 입력..."
+            />
+            <button class="btn btn-accent" onclick="searchRadio()">검색</button>
+          </div>
+
+          <div id="radio-list">채널을 선택하거나 검색어를 입력하세요.</div>
+          <div class="status-badge" id="radio-status">Status: Ready</div>
+
+          <audio id="radio-player" controls crossorigin="anonymous"></audio>
+          <canvas id="spectrum"></canvas>
+
+          <div class="control-card">
+            <div class="card-title">🎙️ 라디오 녹음기</div>
+            <div style="display: flex; gap: 8px">
+              <button
+                class="btn"
+                id="rec-radio-start"
+                onclick="startRadioRec()"
+              >
+                녹음 시작
+              </button>
+              <button
+                class="btn"
+                id="rec-radio-stop"
+                onclick="stopRadioRec()"
+                disabled
+              >
+                중지
+              </button>
+              <a
+                id="radio-save"
+                class="btn btn-accent"
+                style="display: none"
+                download="radio_record.webm"
+                >저장</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- TV / VIDEO VIEW PANEL -->
+        <div class="view-panel" id="panel-video">
+          <div class="input-group">
+            <select id="tv-preset" onchange="applyTvPreset(this.value)">
+              <option value="">-- TV 및 뉴스 채널 선택 --</option>
+              <optgroup label="🇰🇷 대한민국 TV & 뉴스">
+                <option value="https://live-ytn.ytn.co.kr/ytn/live_hd.m3u8">
+                  📺 YTN 뉴스 24시간 실시간
+                </option>
+                <option value="https://yonhap.m3u8.stream/live.m3u8">
+                  📺 연합뉴스TV (Yonhap News)
+                </option>
+                <option value="https://arirang.m3u8.stream/live.m3u8">
+                  📺 아리랑 TV (Arirang World)
+                </option>
+                <option value="https://kbs-hls.vtc.co.kr/live.m3u8">
+                  📺 KBS World News
+                </option>
+              </optgroup>
+              <optgroup label="🇺🇸 미국 뉴스 & 대표 방송">
+                <option value="https://abcnews-us.m3u8.stream/live.m3u8">
+                  🇺🇸 ABC News Live
+                </option>
+                <option value="https://cbsnews.m3u8.stream/live.m3u8">
+                  🇺🇸 CBS News 24/7
+                </option>
+                <option value="https://bloomberg.m3u8.stream/live.m3u8">
+                  🇺🇸 Bloomberg TV (금융/경제)
+                </option>
+                <option value="https://weather-us.m3u8.stream/live.m3u8">
+                  🇺🇸 The Weather Channel
+                </option>
+              </optgroup>
+              <optgroup label="🎬 무료 영화 샘플">
+                <option
+                  value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+                >
+                  🎬 3D 애니메이션 (Big Buck Bunny)
+                </option>
+                <option
+                  value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
+                >
+                  🎬 SF 단편 영화 (Tears of Steel)
+                </option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <input
+              id="video-url"
+              type="text"
+              placeholder="비디오/스트림 URL (M3U8 / MP4)"
+            />
+            <button class="btn btn-accent" onclick="loadVideo()">
+              비디오 로드
+            </button>
+          </div>
+
+          <video id="video-player" controls></video>
+
+          <div class="control-card">
+            <div class="card-title">🎥 TV / 비디오 녹화</div>
+            <div style="display: flex; gap: 8px">
+              <button
+                class="btn"
+                id="rec-video-start"
+                onclick="startVideoRec()"
+              >
+                녹화 시작
+              </button>
+              <button
+                class="btn"
+                id="rec-video-stop"
+                onclick="stopVideoRec()"
+                disabled
+              >
+                중지
+              </button>
+              <a
+                id="video-save"
+                class="btn btn-accent"
+                style="display: none"
+                download="video_record.webm"
+                >저장</a
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip.com 배너 -->
+        <a
+          href="https://www.trip.com/t/77sfZ47lEW2"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="ad-banner"
+          title="Trip.com 최저가 항공권 및 호텔 예약"
+        >
+          <div class="ad-text">
+            <div class="ad-title">✈️ Trip.com 특별 할인 혜택</div>
+            <div>전 세계 항공권, 호텔, 열차표 최저가 예약하기</div>
+          </div>
+          <div class="ad-badge">예약하기 ➔</div>
+        </a>
+      </div>
+    </div>
+
+    <script>
+      /* ---------------------------
+   CONFIG (Node.js Proxy Server URL)
+---------------------------- */
+      // 로컬 실행 시 기본 설정입니다. 백엔드 주소가 다를 경우 수정하세요.
+      const PROXY_BASE_URL = 'http://localhost:3000/proxy?url=';
+
+      /* ---------------------------
+   UI & PRESETS
+---------------------------- */
+      function switchTab(mode) {
+        document
+          .getElementById('tab-radio')
+          .classList.toggle('active', mode === 'radio');
+        document
+          .getElementById('tab-video')
+          .classList.toggle('active', mode === 'video');
+        document
+          .getElementById('panel-radio')
+          .classList.toggle('active', mode === 'radio');
+        document
+          .getElementById('panel-video')
+          .classList.toggle('active', mode === 'video');
+      }
+
+      function selectRadioChannel(val) {
+        if (!val) return;
+        document.getElementById('radio-kw').value = val;
+        searchRadio();
+      }
+
+      function applyTvPreset(url) {
+        if (!url) return;
+        document.getElementById('video-url').value = url;
+        loadVideo();
+      }
+
+      /* ---------------------------
+   RADIO SEARCH & AUDIO EQ
+---------------------------- */
+      async function searchRadio() {
+        const kw = document.getElementById('radio-kw').value.trim();
+        const list = document.getElementById('radio-list');
+        const status = document.getElementById('radio-status');
+
+        if (!kw) return;
+
+        list.textContent = '검색 중...';
+        status.textContent = 'Searching...';
+
+        try {
+          const url =
+            'https://de1.api.radio-browser.info/json/stations/search?limit=25&hidebroken=true&name=' +
+            encodeURIComponent(kw);
+          const res = await fetch(url);
+          const stations = await res.json();
+
+          if (!stations.length) {
+            list.textContent = '방송국을 찾지 못했습니다.';
+            status.textContent = 'No result';
+            return;
+          }
+
+          list.innerHTML = '';
+          stations.forEach((st) => {
+            const div = document.createElement('div');
+            div.className = 'station-item';
+            div.textContent = `${st.name} (${st.countrycode || 'Global'}) - ${st.codec || 'MP3'}`;
+            div.onclick = () => playRadio(st.url_resolved, st.name);
+            list.appendChild(div);
+          });
+
+          status.textContent = 'Select station';
+        } catch (e) {
+          console.error(e);
+          list.textContent = '검색 중 오류가 발생했습니다.';
+          status.textContent = 'Error';
+        }
+      }
+
+      function playRadio(url, name) {
+        const player = document.getElementById('radio-player');
+        const status = document.getElementById('radio-status');
+        player.src = url;
+        player
+          .play()
+          .then(() => {
+            status.textContent = 'Playing: ' + (name || 'Station');
+            initEQ();
+          })
+          .catch((err) => {
+            console.error(err);
+            status.textContent = '재생 실패 (보안 스트림 규제)';
+          });
+      }
+
+      /* 32-Band HSL Equalizer */
+      let audioCtx = null,
+        analyser = null,
+        sourceNode = null,
+        eqRunning = false;
+
+      function initEQ() {
+        const audio = document.getElementById('radio-player');
+        const canvas = document.getElementById('spectrum');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 512;
+          analyser.smoothingTimeConstant = 0.8;
+        }
+
+        if (!sourceNode) {
+          sourceNode = audioCtx.createMediaElementSource(audio);
+          sourceNode.connect(analyser);
+          analyser.connect(audioCtx.destination);
+        }
+
+        if (eqRunning) return;
+        eqRunning = true;
+
+        const buffer = new Uint8Array(analyser.frequencyBinCount);
+
+        function loop() {
+          analyser.getByteFrequencyData(buffer);
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          const barCount = 32;
+          const barWidth = canvas.width / barCount;
+
+          for (let i = 0; i < barCount; i++) {
+            const v = buffer[i] / 255;
+            const h = v * canvas.height;
+            ctx.fillStyle = `hsl(${i * 10}, 100%, 50%)`;
+            ctx.fillRect(i * barWidth + 1, canvas.height - h, barWidth - 2, h);
+          }
+          requestAnimationFrame(loop);
+        }
+        loop();
+      }
+
+      /* ---------------------------
+   RECORDING SYSTEM
+---------------------------- */
+      let radioRec = null,
+        radioChunks = [];
+
+      function startRadioRec() {
+        const audio = document.getElementById('radio-player');
+        const status = document.getElementById('radio-status');
+
+        if (!audio.src) return alert('먼저 오디오를 재생하세요.');
+
+        const stream = audio.captureStream ? audio.captureStream() : null;
+        if (!stream) return alert('오디오 캡처를 지원하지 않습니다.');
+
+        radioChunks = [];
+        radioRec = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+
+        radioRec.ondataavailable = (e) => {
+          if (e.data.size > 0) radioChunks.push(e.data);
+        };
+        radioRec.onstop = () => {
+          const blob = new Blob(radioChunks, { type: 'audio/webm' });
+          const link = document.getElementById('radio-save');
+          link.href = URL.createObjectURL(blob);
+          link.style.display = 'inline-block';
+          status.textContent = 'Recording ready';
+        };
+
+        radioRec.start();
+        document.getElementById('rec-radio-start').disabled = true;
+        document.getElementById('rec-radio-stop').disabled = false;
+        status.textContent = 'Recording...';
+      }
+
+      function stopRadioRec() {
+        if (radioRec && radioRec.state !== 'inactive') radioRec.stop();
+        document.getElementById('rec-radio-start').disabled = false;
+        document.getElementById('rec-radio-stop').disabled = true;
+      }
+
+      /* ---------------------------
+   VIDEO PLAYER (Proxy & HLS.js)
+---------------------------- */
+      let hlsEngine = null;
+
+      function loadVideo() {
+        const rawUrl = document.getElementById('video-url').value.trim();
+        const video = document.getElementById('video-player');
+
+        if (!rawUrl) return;
+
+        if (hlsEngine) hlsEngine.destroy();
+
+        // 일반 mp4 등 프록시가 필요 없는 확장자인 경우 직접 연결, M3U8인 경우 server.js 프록시 우회 주소 생성
+        let targetUrl = rawUrl;
+        if (rawUrl.includes('.m3u8')) {
+          targetUrl = PROXY_BASE_URL + encodeURIComponent(rawUrl);
+        }
+
+        if (Hls.isSupported() && rawUrl.includes('.m3u8')) {
+          hlsEngine = new Hls();
+          hlsEngine.loadSource(targetUrl);
+          hlsEngine.attachMedia(video);
+          hlsEngine.on(Hls.Events.MANIFEST_PARSED, () =>
+            video.play().catch((e) => console.error(e)),
+          );
+        } else {
+          video.src = targetUrl;
+          video.play().catch((e) => console.error(e));
+        }
+      }
+
+      let videoRec = null,
+        videoChunks = [];
+
+      function startVideoRec() {
+        const video = document.getElementById('video-player');
+        const stream = video.captureStream ? video.captureStream() : null;
+
+        if (!stream) return alert('비디오 캡처를 지원하지 않습니다.');
+
+        videoChunks = [];
+        videoRec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+
+        videoRec.ondataavailable = (e) => {
+          if (e.data.size > 0) videoChunks.push(e.data);
+        };
+        videoRec.onstop = () => {
+          const blob = new Blob(videoChunks, { type: 'video/webm' });
+          const link = document.getElementById('video-save');
+          link.href = URL.createObjectURL(blob);
+          link.style.display = 'inline-block';
+        };
+
+        videoRec.start();
+        document.getElementById('rec-video-start').disabled = true;
+        document.getElementById('rec-video-stop').disabled = false;
+      }
+
+      function stopVideoRec() {
+        if (videoRec && videoRec.state !== 'inactive') videoRec.stop();
+        document.getElementById('rec-video-start').disabled = false;
+        document.getElementById('rec-video-stop').disabled = true;
+      }
+    </script>
+  </body>
+</html>
