@@ -1,18 +1,37 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
-const request = require('request');
+
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// 모든 도메인에서의 접속을 허용하는 CORS 설정
-app.use(cors({ origin: '*' }));
+// CORS 및 미들웨어
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// 프록시 라우트
-app.get('/proxy', (req, res) => {
-    const streamUrl = req.query.url;
-    if (!streamUrl) return res.status(400).send('URL이 필요합니다.');
+// public 폴더 정적 파일 호스팅 (index.html, css, js 등)
+const publicPath = path.join(__dirname, 'public');
+app.use(express.static(publicPath));
 
-    // 외부 서버로 스트림 요청 후 응답을 그대로 클라이언트에 파이프(Pipe) 전달
-    req.pipe(request(streamUrl)).pipe(res);
+// 메인 라우트
+app.get('/', (req, res) => {
+  res.sendFile(path.join(publicPath, 'index.html'));
 });
 
-app.listen(3000, () => console.log('Proxy Server running on port 3000'));
+// 404 핸들러
+app.use((req, res) => {
+  res.status(404).send('페이지를 찾을 수 없습니다.');
+});
+
+// 에러 핸들러
+app.use((err, req, res, next) => {
+  console.error('서버 내부 오류:', err.stack);
+  res.status(500).send('서버 내부 오류가 발생했습니다.');
+});
+
+app.listen(PORT, () => {
+  console.log(`===========================================`);
+  console.log(`Radio Player Server Running at http://localhost:${PORT}`);
+  console.log(`===========================================`);
+});

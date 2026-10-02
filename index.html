@@ -1,35 +1,33 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Windows 11 Media Studio</title>
-    <!-- HLS.js (M3U8 TV 스트림 재생) -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <title>Internet Radio Player v1.5</title>
     <style>
       :root {
-        --win-bg: rgba(243, 243, 243, 0.88);
-        --win-border: rgba(0, 0, 0, 0.08);
-        --accent-color: #0067c0;
-        --accent-hover: #1875d1;
-        --btn-bg: #ffffff;
-        --btn-hover: #f6f6f6;
-        --text-primary: #1a1a1a;
-        --text-secondary: #5f5f5f;
+        --win-bg: rgba(24, 24, 28, 0.95);
+        --win-border: rgba(255, 255, 255, 0.15);
+        --accent-color: #0078d4;
+        --accent-hover: #106ebe;
+        --btn-bg: #2d2d30;
+        --btn-hover: #3e3e42;
+        --text-primary: #ffffff;
+        --text-secondary: #aaaaaa;
       }
 
       * {
         box-sizing: border-box;
+        user-select: none;
+        -webkit-user-select: none;
       }
 
       body {
-        font-family:
-          'Segoe UI Variable Text', 'Segoe UI', Tahoma, Geneva, Verdana,
-          sans-serif;
-        background: radial-gradient(circle at top left, #cbe2ff, #2b589c);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: radial-gradient(circle at top left, #10141d, #05070a);
         min-height: 100vh;
         margin: 0;
-        padding: 20px 10px;
+        padding: 15px 10px;
         display: flex;
         justify-content: center;
         align-items: flex-start;
@@ -38,596 +36,472 @@
 
       .win11-window {
         width: 100%;
-        max-width: 560px;
+        max-width: 520px;
         background: var(--win-bg);
-        backdrop-filter: blur(25px) saturate(180%);
-        -webkit-backdrop-filter: blur(25px) saturate(180%);
-        border-radius: 12px;
+        backdrop-filter: blur(20px);
+        border-radius: 10px;
         border: 1px solid var(--win-border);
-        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.22);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
         overflow: hidden;
       }
 
       .win-header {
-        height: 40px;
-        background: rgba(255, 255, 255, 0.4);
+        height: 36px;
+        background: rgba(255, 255, 255, 0.05);
         border-bottom: 1px solid var(--win-border);
-        padding: 0 14px;
+        padding: 0 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        user-select: none;
+        font-size: 12px;
+        font-weight: 600;
       }
 
-      .win-title {
-        font-size: 13px;
-        font-weight: 600;
+      .win-body {
+        padding: 12px;
+      }
+
+      .ticker-container {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        overflow: hidden;
+        white-space: nowrap;
         display: flex;
         align-items: center;
         gap: 8px;
       }
 
-      .win-btn-close {
-        width: 28px;
-        height: 24px;
-        border: none;
-        background: transparent;
+      .ticker-badge {
+        background: #238636;
+        color: #fff;
+        font-size: 10px;
+        font-weight: bold;
+        padding: 2px 6px;
         border-radius: 4px;
-        cursor: pointer;
-        font-size: 11px;
+        flex-shrink: 0;
       }
 
-      .win-btn-close:hover {
-        background: #e81123;
-        color: #ffffff;
-      }
-
-      .tab-bar {
-        display: flex;
-        background: rgba(0, 0, 0, 0.03);
-        padding: 6px;
-        gap: 6px;
-        border-bottom: 1px solid var(--win-border);
-      }
-
-      .tab-btn {
+      .ticker-text {
+        display: inline-block;
+        color: #58a6ff;
+        font-family: monospace;
+        font-size: 12px;
+        font-weight: bold;
+        animation: ticker 15s linear infinite;
         flex: 1;
-        padding: 8px;
-        border: none;
-        background: transparent;
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--text-secondary);
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.2s;
       }
 
-      .tab-btn.active {
-        background: #ffffff;
-        color: var(--accent-color);
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-      }
-
-      .win-body {
-        padding: 14px;
-      }
-      .view-panel {
-        display: none;
-      }
-      .view-panel.active {
-        display: block;
+      @keyframes ticker {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
       }
 
       .input-group {
         display: flex;
         gap: 6px;
         margin-bottom: 8px;
-        flex-wrap: wrap;
       }
 
-      input[type='text'],
-      select {
-        padding: 8px 10px;
+      input[type='text'], select {
+        padding: 6px 10px;
         font-size: 12px;
         border: 1px solid var(--win-border);
-        border-radius: 6px;
-        background: #ffffff;
+        border-radius: 4px;
+        background: #1e1e24;
+        color: #fff;
         outline: none;
         flex: 1;
-        min-width: 140px;
       }
 
       .btn {
-        padding: 7px 12px;
-        font-size: 12px;
-        font-weight: 500;
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 600;
         border: 1px solid var(--win-border);
         background: var(--btn-bg);
         color: var(--text-primary);
         cursor: pointer;
-        border-radius: 6px;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+        border-radius: 4px;
         white-space: nowrap;
       }
-
-      .btn:hover {
-        background: var(--btn-hover);
-      }
-
-      .btn-accent {
-        background: var(--accent-color);
-        color: #ffffff;
-        border: none;
-      }
-
-      .btn-accent:hover {
-        background: var(--accent-hover);
-      }
-      .btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
+      .btn:hover { background: var(--btn-hover); }
+      .btn-accent { background: var(--accent-color); border: none; }
+      .btn-accent:hover { background: var(--accent-hover); }
 
       #radio-list {
-        height: 100px;
+        height: 80px;
         overflow-y: auto;
-        background: #ffffff;
+        background: #141418;
         border: 1px solid var(--win-border);
-        border-radius: 8px;
+        border-radius: 4px;
         padding: 4px;
         margin-bottom: 8px;
+        font-size: 11px;
       }
 
       .station-item {
-        padding: 6px 8px;
-        font-size: 12px;
-        border-radius: 4px;
+        padding: 5px 8px;
+        border-radius: 3px;
         cursor: pointer;
-      }
-
-      .station-item:hover {
-        background: #eef5ff;
-        color: var(--accent-color);
-        font-weight: 600;
-      }
-
-      .status-badge {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--accent-color);
-        margin: 4px 0;
-      }
-
-      audio {
-        width: 100%;
-        margin-top: 4px;
-      }
-
-      #spectrum {
-        width: 100%;
-        height: 120px;
-        background: #0d0d0d;
-        border-radius: 8px;
-        margin-top: 8px;
-      }
-
-      video {
-        width: 100%;
-        height: 260px;
-        border-radius: 8px;
-        background: #000000;
-        margin-top: 6px;
-      }
-
-      .control-card {
-        background: rgba(255, 255, 255, 0.6);
-        border: 1px solid var(--win-border);
-        border-radius: 8px;
-        padding: 10px;
-        margin-top: 10px;
-      }
-
-      .card-title {
-        font-size: 12px;
-        font-weight: 700;
-        margin-bottom: 6px;
-        color: var(--text-secondary);
-      }
-
-      .ad-banner {
-        margin-top: 12px;
-        padding: 12px;
-        background: linear-gradient(135deg, #003580, #0056b3);
-        color: #ffffff;
-        border-radius: 8px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        text-decoration: none;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-        transition: transform 0.2s;
-      }
-
-      .ad-banner:hover {
-        transform: translateY(-2px);
-      }
-      .ad-text {
-        font-size: 12px;
-      }
-      .ad-title {
-        font-weight: bold;
-        font-size: 13px;
         margin-bottom: 2px;
       }
-      .ad-badge {
-        background: #ff9500;
-        color: #fff;
-        font-size: 11px;
-        padding: 5px 12px;
-        border-radius: 20px;
-        font-weight: bold;
+      .station-item:hover { background: var(--accent-color); color: #fff; }
+      .station-item.rejected {
+        background: #201515 !important;
+        color: #775555 !important;
+        opacity: 0.6;
+        cursor: not-allowed;
       }
 
-      @media (max-width: 480px) {
-        body {
-          padding: 5px;
-        }
-        .win11-window {
-          border-radius: 8px;
-        }
-        .win-body {
-          padding: 10px;
-        }
-        video {
-          height: 200px;
-        }
-        #spectrum {
-          height: 90px;
-        }
-        .input-group {
-          flex-direction: column;
-        }
-        input[type='text'],
-        select,
-        .btn {
-          width: 100%;
-        }
-        .ad-banner {
-          flex-direction: column;
-          gap: 8px;
-          text-align: center;
-        }
+      audio { width: 100%; margin-bottom: 8px; height: 36px; }
+
+      .scope-container {
+        background: #000000;
+        border-radius: 6px;
+        padding: 6px;
+        border: 1px solid var(--win-border);
+        margin-bottom: 8px;
+      }
+
+      .scope-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        font-size: 11px;
+        color: var(--text-secondary);
+      }
+
+      canvas {
+        width: 100%;
+        height: 140px;
+        background: #050505;
+        border-radius: 4px;
+        display: block;
+      }
+
+      .record-panel {
+        background: #18181c;
+        border: 1px solid var(--win-border);
+        padding: 8px 12px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .promo-banner {
+        width: 100%;
+        height: 50px;
+        background: linear-gradient(135deg, #003580, #0056b3);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        text-decoration: none;
+        color: #fff;
+        margin-bottom: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .promo-banner-sub {
+        width: 100%;
+        height: 42px;
+        background: linear-gradient(135deg, #1d6fa5, #0088cc);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        text-decoration: none;
+        color: #fff;
+        margin-bottom: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
       }
     </style>
   </head>
-  <body>
-    <div class="win11-window" id="main-window">
+  <body oncontextmenu="return false;" ondragstart="return false;">
+    <div class="win11-window">
       <div class="win-header">
-        <div class="win-title">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <rect x="2" y="3" width="20" height="14" rx="2" />
-            <line x1="8" y1="21" x2="16" y2="21" />
-            <line x1="12" y1="17" x2="12" y2="21" />
-          </svg>
-          Windows 11 Media Studio
-        </div>
-        <button
-          class="win-btn-close"
-          onclick="
-            document.getElementById('main-window').style.display = 'none'
-          "
-        >
-          ✕
-        </button>
-      </div>
-
-      <div class="tab-bar">
-        <button
-          class="tab-btn active"
-          id="tab-radio"
-          onclick="switchTab('radio')"
-        >
-          📻 라디오 방송
-        </button>
-        <button class="tab-btn" id="tab-video" onclick="switchTab('video')">
-          📺 실시간 TV / 영화
-        </button>
+        <div>📻 Internet Radio Player</div>
+        <div style="font-size: 10px; opacity: 0.6">v1.5</div>
       </div>
 
       <div class="win-body">
-        <!-- RADIO VIEW PANEL -->
-        <div class="view-panel active" id="panel-radio">
-          <div class="input-group">
-            <select id="radio-preset" onchange="selectRadioChannel(this.value)">
-              <option value="">-- 대표 라디오 채널 선택 --</option>
-              <optgroup label="🇰🇷 한국 주요 라디오">
-                <option value="KBS">KBS 라디오 (1FM / 2FM / 1라디오)</option>
-                <option value="MBC">MBC 라디오 (표준FM / FM4U)</option>
-                <option value="SBS">SBS 파워FM / 러브FM</option>
-                <option value="CBS">CBS 기독교방송</option>
-                <option value="BBS">BBS 불교방송</option>
-                <option value="FEBC">FEBC 극동방송</option>
-                <option value="CPBC">CPBC 가톨릭평화방송</option>
-                <option value="tbs">tbs 교통방송</option>
-              </optgroup>
-              <optgroup label="🌐 해외 주요 도시">
-                <option value="Seattle">🇺🇸 시애틀 (Seattle)</option>
-                <option value="Seoul">🇰🇷 서울 전체 (Seoul)</option>
-                <option value="Berlin">🇩🇪 베를린 (Berlin)</option>
-                <option value="Tokyo">🇯🇵 도쿄 (Tokyo)</option>
-                <option value="London">🇬🇧 런던 (London)</option>
-              </optgroup>
+        <!-- Live Ticker -->
+        <div class="ticker-container">
+          <span class="ticker-badge">LIVE</span>
+          <div id="radio-text" class="ticker-text">Please select a radio station...</div>
+        </div>
+
+        <!-- Preset Select -->
+        <div class="input-group">
+          <select id="radio-preset" onchange="selectRadioChannel(this.value)">
+            <option value="">-- Select Major Preset Station --</option>
+            <optgroup label="🌲 Seattle Local Stations">
+              <option value="KEXP">🇺🇸 KEXP 90.3 FM (Seattle Ind/Rock)</option>
+              <option value="KNKX">🇺🇸 KNKX 88.5 FM (Seattle Jazz & News)</option>
+              <option value="KUOW">🇺🇸 KUOW 94.9 FM (Seattle NPR News)</option>
+              <option value="KING FM">🇺🇸 KING FM 98.1 (Seattle Classical)</option>
+              <option value="KEXP Seattle">🇺🇸 KEXP World Wide Stream</option>
+            </optgroup>
+            <optgroup label="🌐 Global Stations">
+              <option value="BBC Radio 1">🇬🇧 BBC Radio 1 (UK Pop)</option>
+              <option value="Capital FM">🇬🇧 Capital FM London (UK Top40)</option>
+              <option value="Jazz FM">🇬🇧 Jazz FM (UK Jazz)</option>
+              <option value="WNYC">🇺🇸 WNYC FM New York (US)</option>
+            </optgroup>
+            <optgroup label="🇰🇷 Korea Stations">
+              <option value="KBS">KBS Radio (KBS 라디오)</option>
+              <option value="MBC">MBC Radio (MBC 라디오)</option>
+              <option value="SBS">SBS Power FM (SBS 파워FM)</option>
+              <option value="CBS">CBS Radio (CBS 기독교방송)</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- User Saved Presets -->
+        <div class="input-group">
+          <select id="user-preset-select" onchange="playUserPreset(this.value)">
+            <option value="">-- Saved User Presets --</option>
+          </select>
+          <button class="btn" style="background: #d32f2f; color: #fff" onclick="deleteUserPreset()">Delete</button>
+        </div>
+
+        <!-- Station Search Box -->
+        <div class="input-group">
+          <input id="radio-kw" type="text" value="" placeholder="Enter station keyword (e.g. KEXP, Jazz, KBS)..." />
+          <button class="btn btn-accent" onclick="searchRadio()">Search</button>
+        </div>
+
+        <!-- Station List -->
+        <div id="radio-list">Select or search for a radio station.</div>
+
+        <!-- Audio Player -->
+        <audio id="radio-player" controls crossorigin="anonymous"></audio>
+
+        <!-- EQ Visualizer Display (8 Options) -->
+        <div class="scope-container">
+          <div class="scope-toolbar">
+            <div>📊 EQ Visualizer (8 Options):</div>
+            <select id="scope-mode" onchange="setScopeMode(this.value)" style="padding: 2px 6px; font-size: 11px; background: #1a1a1d; color: #fff;">
+              <option value="no-eq">⚡ 1. NO EQ (Low Power / Legacy Device)</option>
+              <option value="combined-wave">🌊 2. 2CH Combined Waveform (L/R Mix)</option>
+              <option value="split-wave">🔀 3. 2CH Split Waveform (Separate L/R)</option>
+              <option value="rainbow-led">🌈 4. Rainbow Micro LED (Split L/R)</option>
+              <option value="cyber-bars">🎛 5. Cyberpunk Peak Bars Spectrum</option>
+              <option value="radial-3d">🎯 6. 3D Radial Circular Beam</option>
+              <option value="particle-cloud">🌌 7. Sci-Fi Particle Wave Cloud</option>
+              <option value="vu-meter">📼 8. Mirror Stereo VU Meter</option>
             </select>
           </div>
+          <canvas id="scopeCanvas"></canvas>
+        </div>
 
-          <div class="input-group">
-            <input
-              id="radio-kw"
-              type="text"
-              value="KBS"
-              placeholder="방송국/키워드 입력..."
-            />
-            <button class="btn btn-accent" onclick="searchRadio()">검색</button>
+        <!-- Recording Panel -->
+        <div class="record-panel">
+          <div>
+            <strong style="font-size: 12px">🎙️ Audio Recording</strong>
+            <div id="recStatus" style="font-size: 11px; color: var(--text-secondary)">Standby</div>
           </div>
-
-          <div id="radio-list">채널을 선택하거나 검색어를 입력하세요.</div>
-          <div class="status-badge" id="radio-status">Status: Ready</div>
-
-          <audio id="radio-player" controls crossorigin="anonymous"></audio>
-          <canvas id="spectrum"></canvas>
-
-          <div class="control-card">
-            <div class="card-title">🎙️ 라디오 녹음기</div>
-            <div style="display: flex; gap: 8px">
-              <button
-                class="btn"
-                id="rec-radio-start"
-                onclick="startRadioRec()"
-              >
-                녹음 시작
-              </button>
-              <button
-                class="btn"
-                id="rec-radio-stop"
-                onclick="stopRadioRec()"
-                disabled
-              >
-                중지
-              </button>
-              <a
-                id="radio-save"
-                class="btn btn-accent"
-                style="display: none"
-                download="radio_record.webm"
-                >저장</a
-              >
-            </div>
+          <div style="display: flex; gap: 4px">
+            <button id="recBtn" class="btn btn-accent" onclick="toggleAudioRecord()">Start Record</button>
+            <a id="audioSave" class="btn" style="display: none; background: #388e3c; color: #fff; text-decoration: none;" download="radio_recording.mp3">Save MP3</a>
           </div>
         </div>
 
-        <!-- TV / VIDEO VIEW PANEL -->
-        <div class="view-panel" id="panel-video">
-          <div class="input-group">
-            <select id="tv-preset" onchange="applyTvPreset(this.value)">
-              <option value="">-- TV 및 뉴스 채널 선택 --</option>
-              <optgroup label="🇰🇷 대한민국 TV & 뉴스">
-                <option value="https://live-ytn.ytn.co.kr/ytn/live_hd.m3u8">
-                  📺 YTN 뉴스 24시간 실시간
-                </option>
-                <option value="https://yonhap.m3u8.stream/live.m3u8">
-                  📺 연합뉴스TV (Yonhap News)
-                </option>
-                <option value="https://arirang.m3u8.stream/live.m3u8">
-                  📺 아리랑 TV (Arirang World)
-                </option>
-                <option value="https://kbs-hls.vtc.co.kr/live.m3u8">
-                  📺 KBS World News
-                </option>
-              </optgroup>
-              <optgroup label="🇺🇸 미국 뉴스 & 대표 방송">
-                <option value="https://abcnews-us.m3u8.stream/live.m3u8">
-                  🇺🇸 ABC News Live
-                </option>
-                <option value="https://cbsnews.m3u8.stream/live.m3u8">
-                  🇺🇸 CBS News 24/7
-                </option>
-                <option value="https://bloomberg.m3u8.stream/live.m3u8">
-                  🇺🇸 Bloomberg TV (금융/경제)
-                </option>
-                <option value="https://weather-us.m3u8.stream/live.m3u8">
-                  🇺🇸 The Weather Channel
-                </option>
-              </optgroup>
-              <optgroup label="🎬 무료 영화 샘플">
-                <option
-                  value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-                >
-                  🎬 3D 애니메이션 (Big Buck Bunny)
-                </option>
-                <option
-                  value="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
-                >
-                  🎬 SF 단편 영화 (Tears of Steel)
-                </option>
-              </optgroup>
-            </select>
+        <!-- Trip.com Sponsor Link 1 -->
+        <a href="https://www.trip.com/?Allianceid=8796691&SID=320666228&trip_sub1=&trip_sub3=D18303749&linkhub_token=sl_zGQ0YJsVIV2" target="_blank" class="promo-banner">
+          <div>
+            <strong style="font-size: 11px">✈️ Trip.com Main Special Offer</strong><br />
+            <span style="font-size: 10px; opacity: 0.85">Lowest Flights & Hotels Booking</span>
           </div>
+          <span style="background: #ff9500; color: #fff; padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: bold;">Visit ➔</span>
+        </a>
 
-          <div class="input-group">
-            <input
-              id="video-url"
-              type="text"
-              placeholder="비디오/스트림 URL (M3U8 / MP4)"
-            />
-            <button class="btn btn-accent" onclick="loadVideo()">
-              비디오 로드
-            </button>
+        <!-- Trip.com Sponsor Link 2 -->
+        <a href="https://sg.trip.com/sale/w/oxpsorbijlbbhzzi/26hengqin.html?locale=en-sg&curr=sgd&promo_referer=3371_null_1&Allianceid=8796691&SID=320666228&trip_sub1=&trip_sub3=D18921429&linkhub_token=sl_M8hCI3plfV2" target="_blank" class="promo-banner-sub">
+          <div>
+            <strong style="font-size: 11px">🌴 Hengqin Promo Special Deals</strong><br />
+            <span style="font-size: 10px; opacity: 0.85">Exclusive Discounts & Travel Pass</span>
           </div>
-
-          <video id="video-player" controls></video>
-
-          <div class="control-card">
-            <div class="card-title">🎥 TV / 비디오 녹화</div>
-            <div style="display: flex; gap: 8px">
-              <button
-                class="btn"
-                id="rec-video-start"
-                onclick="startVideoRec()"
-              >
-                녹화 시작
-              </button>
-              <button
-                class="btn"
-                id="rec-video-stop"
-                onclick="stopVideoRec()"
-                disabled
-              >
-                중지
-              </button>
-              <a
-                id="video-save"
-                class="btn btn-accent"
-                style="display: none"
-                download="video_record.webm"
-                >저장</a
-              >
-            </div>
-          </div>
-        </div>
-
-        <!-- Trip.com 배너 -->
-        <a
-          href="https://www.trip.com/t/77sfZ47lEW2"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="ad-banner"
-          title="Trip.com 최저가 항공권 및 호텔 예약"
-        >
-          <div class="ad-text">
-            <div class="ad-title">✈️ Trip.com 특별 할인 혜택</div>
-            <div>전 세계 항공권, 호텔, 열차표 최저가 예약하기</div>
-          </div>
-          <div class="ad-badge">예약하기 ➔</div>
+          <span style="background: #00e5ff; color: #000; padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: bold;">Explore ➔</span>
         </a>
       </div>
     </div>
 
     <script>
-      /* ---------------------------
-   CONFIG (Node.js Proxy Server URL)
----------------------------- */
-      // 로컬 실행 시 기본 설정입니다. 백엔드 주소가 다를 경우 수정하세요.
-      const PROXY_BASE_URL = 'http://localhost:3000/proxy?url=';
+      /* Security: Block shortcuts for DevTools */
+      document.addEventListener('keydown', function (e) {
+        if (
+          e.keyCode === 123 || 
+          (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) ||
+          (e.ctrlKey && e.keyCode === 85)
+        ) {
+          e.preventDefault();
+          return false;
+        }
+      });
 
-      /* ---------------------------
-   UI & PRESETS
----------------------------- */
-      function switchTab(mode) {
-        document
-          .getElementById('tab-radio')
-          .classList.toggle('active', mode === 'radio');
-        document
-          .getElementById('tab-video')
-          .classList.toggle('active', mode === 'video');
-        document
-          .getElementById('panel-radio')
-          .classList.toggle('active', mode === 'radio');
-        document
-          .getElementById('panel-video')
-          .classList.toggle('active', mode === 'video');
+      /* 1. Startup Promo Popup Function */
+      function openPromoPopup() {
+        const promoUrl = 'https://www.trip.com/?Allianceid=8796691&SID=320666228&trip_sub1=&trip_sub3=D18303749&linkhub_token=sl_zGQ0YJsVIV2';
+        window.open(promoUrl, '_blank');
       }
 
+      /* 2. Presets Management */
+      function loadUserPresets() {
+        const select = document.getElementById('user-preset-select');
+        select.innerHTML = '<option value="">-- Saved User Presets --</option>';
+        const presets = JSON.parse(localStorage.getItem('radio_presets') || '[]');
+        presets.forEach((st) => {
+          const opt = document.createElement('option');
+          opt.value = st.url;
+          opt.textContent = `⭐ ${st.name}`;
+          select.appendChild(opt);
+        });
+      }
+
+      function autoAddPreset(name, url) {
+        if (!name || !url) return;
+        let presets = JSON.parse(localStorage.getItem('radio_presets') || '[]');
+        if (!presets.some((p) => p.url === url)) {
+          presets.push({ name: name.trim(), url: url.trim() });
+          localStorage.setItem('radio_presets', JSON.stringify(presets));
+          loadUserPresets();
+        }
+      }
+
+      function playUserPreset(url) {
+        if (!url) return;
+        const select = document.getElementById('user-preset-select');
+        const name = select.options[select.selectedIndex].text.replace(/^⭐\s*/, '');
+        playRadio(url, name);
+      }
+
+      function deleteUserPreset() {
+        const val = document.getElementById('user-preset-select').value;
+        if (!val) return alert('Select a preset to delete.');
+        let presets = JSON.parse(localStorage.getItem('radio_presets') || '[]');
+        presets = presets.filter((p) => p.url !== val);
+        localStorage.setItem('radio_presets', JSON.stringify(presets));
+        loadUserPresets();
+      }
+
+      /* 3. Station Search & Playback */
       function selectRadioChannel(val) {
         if (!val) return;
         document.getElementById('radio-kw').value = val;
         searchRadio();
       }
 
-      function applyTvPreset(url) {
-        if (!url) return;
-        document.getElementById('video-url').value = url;
-        loadVideo();
-      }
-
-      /* ---------------------------
-   RADIO SEARCH & AUDIO EQ
----------------------------- */
       async function searchRadio() {
-        const kw = document.getElementById('radio-kw').value.trim();
+        const kwInput = document.getElementById('radio-kw');
+        const kw = kwInput.value.trim();
         const list = document.getElementById('radio-list');
-        const status = document.getElementById('radio-status');
-
         if (!kw) return;
 
-        list.textContent = '검색 중...';
-        status.textContent = 'Searching...';
-
+        list.textContent = 'Searching stations...';
         try {
-          const url =
-            'https://de1.api.radio-browser.info/json/stations/search?limit=25&hidebroken=true&name=' +
-            encodeURIComponent(kw);
-          const res = await fetch(url);
+          const res = await fetch('https://de1.api.radio-browser.info/json/stations/search?limit=15&hidebroken=true&name=' + encodeURIComponent(kw));
           const stations = await res.json();
-
           if (!stations.length) {
-            list.textContent = '방송국을 찾지 못했습니다.';
-            status.textContent = 'No result';
+            list.textContent = 'No stations found.';
             return;
           }
-
           list.innerHTML = '';
-          stations.forEach((st) => {
+          stations.forEach((st, idx) => {
             const div = document.createElement('div');
             div.className = 'station-item';
-            div.textContent = `${st.name} (${st.countrycode || 'Global'}) - ${st.codec || 'MP3'}`;
-            div.onclick = () => playRadio(st.url_resolved, st.name);
+            div.id = `station-${idx}`;
+            
+            const titleSpan = document.createElement('span');
+            titleSpan.textContent = `📻 ${st.name} [${st.countrycode || 'Global'}]`;
+            
+            const statusSpan = document.createElement('span');
+            statusSpan.style.fontSize = '10px';
+            statusSpan.style.opacity = '0.7';
+
+            div.appendChild(titleSpan);
+            div.appendChild(statusSpan);
+
+            div.onclick = () => {
+              if (div.classList.contains('rejected')) {
+                alert('Connection to this station was rejected or unavailable.');
+                return;
+              }
+              playRadio(st.url_resolved, st.name, div, statusSpan);
+            };
             list.appendChild(div);
           });
-
-          status.textContent = 'Select station';
         } catch (e) {
-          console.error(e);
-          list.textContent = '검색 중 오류가 발생했습니다.';
-          status.textContent = 'Error';
+          list.textContent = 'Error occurred during search.';
         }
       }
 
-      function playRadio(url, name) {
+      function playRadio(url, name, element = null, statusElement = null) {
         const player = document.getElementById('radio-player');
-        const status = document.getElementById('radio-status');
+        const ticker = document.getElementById('radio-text');
+
+        ticker.textContent = `[Connecting...] ${name}`;
+        if (statusElement) statusElement.textContent = '⏳ Connecting...';
+
         player.src = url;
-        player
-          .play()
+        player.play()
           .then(() => {
-            status.textContent = 'Playing: ' + (name || 'Station');
-            initEQ();
+            ticker.textContent = `[LIVE] ${name}`;
+            if (statusElement) statusElement.textContent = '🟢 Playing';
+
+            autoAddPreset(name, url);
+            if (currentScopeMode !== 'no-eq') initStereoEQ();
           })
           .catch((err) => {
-            console.error(err);
-            status.textContent = '재생 실패 (보안 스트림 규제)';
+            console.error('Play rejected:', err);
+            ticker.textContent = `[Rejected] Failed to connect: ${name}`;
+            if (element) element.classList.add('rejected');
+            if (statusElement) {
+              statusElement.textContent = '❌ Rejected';
+              statusElement.style.color = '#ff6b6b';
+            }
           });
       }
 
-      /* 32-Band HSL Equalizer */
-      let audioCtx = null,
-        analyser = null,
-        sourceNode = null,
-        eqRunning = false;
+      /* 4. Audio Visualization Engine (8 Options) */
+      let audioCtx = null, sourceNode = null, analyserL = null, analyserR = null;
+      let currentScopeMode = 'no-eq', animFrameId = null, rainbowHue = 0;
+      let peakHold = new Array(32).fill(0);
 
-      function initEQ() {
+      function setScopeMode(mode) {
+        currentScopeMode = mode;
+        if (mode === 'no-eq') {
+          if (animFrameId) cancelAnimationFrame(animFrameId);
+          clearCanvas();
+        } else {
+          initStereoEQ();
+        }
+      }
+
+      function clearCanvas() {
+        const canvas = document.getElementById('scopeCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.font = 'bold 11px monospace';
+        ctx.fillStyle = '#555';
+        ctx.fillText('NO EQ MODE - POWER SAVING ACTIVE', 15, canvas.height / 2);
+      }
+
+      function initStereoEQ() {
         const audio = document.getElementById('radio-player');
-        const canvas = document.getElementById('spectrum');
+        const canvas = document.getElementById('scopeCanvas');
         const ctx = canvas.getContext('2d');
 
         canvas.width = canvas.clientWidth;
@@ -635,146 +509,238 @@
 
         if (!audioCtx) {
           audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          analyser = audioCtx.createAnalyser();
-          analyser.fftSize = 512;
-          analyser.smoothingTimeConstant = 0.8;
-        }
-
-        if (!sourceNode) {
           sourceNode = audioCtx.createMediaElementSource(audio);
-          sourceNode.connect(analyser);
-          analyser.connect(audioCtx.destination);
+
+          const splitter = audioCtx.createChannelSplitter(2);
+          analyserL = audioCtx.createAnalyser();
+          analyserR = audioCtx.createAnalyser();
+          analyserL.fftSize = 256;
+          analyserR.fftSize = 256;
+
+          sourceNode.connect(splitter);
+          splitter.connect(analyserL, 0);
+          splitter.connect(analyserR, 1);
+          sourceNode.connect(audioCtx.destination);
         }
 
-        if (eqRunning) return;
-        eqRunning = true;
+        if (animFrameId) cancelAnimationFrame(animFrameId);
 
-        const buffer = new Uint8Array(analyser.frequencyBinCount);
+        const freqL = new Uint8Array(analyserL.frequencyBinCount);
+        const freqR = new Uint8Array(analyserR.frequencyBinCount);
+        const timeL = new Uint8Array(analyserL.frequencyBinCount);
+        const timeR = new Uint8Array(analyserR.frequencyBinCount);
 
-        function loop() {
-          analyser.getByteFrequencyData(buffer);
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          const barCount = 32;
-          const barWidth = canvas.width / barCount;
-
-          for (let i = 0; i < barCount; i++) {
-            const v = buffer[i] / 255;
-            const h = v * canvas.height;
-            ctx.fillStyle = `hsl(${i * 10}, 100%, 50%)`;
-            ctx.fillRect(i * barWidth + 1, canvas.height - h, barWidth - 2, h);
+        function renderFrame() {
+          if (currentScopeMode === 'no-eq') {
+            clearCanvas();
+            return;
           }
-          requestAnimationFrame(loop);
+
+          ctx.fillStyle = 'rgba(5, 5, 5, 0.25)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          rainbowHue = (rainbowHue + 1) % 360;
+
+          analyserL.getByteFrequencyData(freqL);
+          analyserR.getByteFrequencyData(freqR);
+          analyserL.getByteTimeDomainData(timeL);
+          analyserR.getByteTimeDomainData(timeR);
+
+          switch (currentScopeMode) {
+            case 'combined-wave':
+              drawCombinedWave(ctx, canvas.width, canvas.height, timeL, timeR);
+              break;
+            case 'split-wave':
+              drawSplitWave(ctx, canvas.width, canvas.height, timeL, timeR);
+              break;
+            case 'rainbow-led':
+              drawRainbowLED(ctx, canvas.width, canvas.height, freqL, freqR);
+              break;
+            case 'cyber-bars':
+              drawCyberBars(ctx, canvas.width, canvas.height, freqL, freqR);
+              break;
+            case 'radial-3d':
+              drawRadial3D(ctx, canvas.width, canvas.height, freqL);
+              break;
+            case 'particle-cloud':
+              drawParticleCloud(ctx, canvas.width, canvas.height, freqL, freqR);
+              break;
+            case 'vu-meter':
+              drawVUMeter(ctx, canvas.width, canvas.height, freqL, freqR);
+              break;
+          }
+
+          animFrameId = requestAnimationFrame(renderFrame);
         }
-        loop();
+        renderFrame();
       }
 
-      /* ---------------------------
-   RECORDING SYSTEM
----------------------------- */
-      let radioRec = null,
-        radioChunks = [];
+      /* EQ Visualizer Algorithms */
+      function drawCombinedWave(ctx, width, height, timeL, timeR) {
+        const sliceWidth = width / timeL.length;
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = `hsl(${rainbowHue}, 100%, 50%)`;
+        ctx.beginPath();
+        let x = 0;
+        for (let i = 0; i < timeL.length; i++) {
+          const y = (timeL[i] / 256.0) * height;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          x += sliceWidth;
+        }
+        ctx.stroke();
 
-      function startRadioRec() {
+        ctx.strokeStyle = `hsl(${(rainbowHue + 180) % 360}, 100%, 50%)`;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        x = 0;
+        for (let i = 0; i < timeR.length; i++) {
+          const y = (timeR[i] / 256.0) * height;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          x += sliceWidth;
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      function drawSplitWave(ctx, width, height, timeL, timeR) {
+        const half = height / 2;
+        const slice = width / timeL.length;
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = '#00e5ff';
+        ctx.beginPath();
+        let x = 0;
+        for (let i = 0; i < timeL.length; i++) {
+          const y = (timeL[i] / 256.0) * half;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          x += slice;
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ff4081';
+        ctx.beginPath();
+        x = 0;
+        for (let i = 0; i < timeR.length; i++) {
+          const y = half + (timeR[i] / 256.0) * half;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+          x += slice;
+        }
+        ctx.stroke();
+      }
+
+      function drawRainbowLED(ctx, width, height, freqL, freqR) {
+        const half = height / 2, bars = 32, barW = (width - 20) / bars, rows = 8, rowH = (half - 15) / rows;
+        for (let i = 0; i < bars; i++) {
+          let valL = freqL[i * 2], valR = freqR[i * 2];
+          let activeL = Math.floor((valL / 255) * rows), activeR = Math.floor((valR / 255) * rows);
+          for (let r = 0; r < rows; r++) {
+            let x = 10 + i * barW;
+            ctx.fillStyle = r < activeL ? `hsl(${(i * 8 + r * 10 + rainbowHue) % 360}, 85%, 60%)` : 'rgba(30,30,30,0.4)';
+            ctx.fillRect(x + 1, half - 5 - (r + 1) * rowH, barW - 2, rowH - 2);
+            ctx.fillStyle = r < activeR ? `hsl(${(i * 8 + r * 10 + rainbowHue + 180) % 360}, 85%, 60%)` : 'rgba(30,30,30,0.4)';
+            ctx.fillRect(x + 1, height - 5 - (r + 1) * rowH, barW - 2, rowH - 2);
+          }
+        }
+      }
+
+      function drawCyberBars(ctx, width, height, freqL, freqR) {
+        const bars = 24, barW = width / bars;
+        for (let i = 0; i < bars; i++) {
+          let val = (freqL[i * 2] + freqR[i * 2]) / 2;
+          let h = (val / 255) * (height - 20);
+          if (h > peakHold[i]) peakHold[i] = h; else peakHold[i] -= 1.5;
+          ctx.fillStyle = '#00ffcc';
+          ctx.fillRect(i * barW + 2, height - h, barW - 4, h);
+          ctx.fillStyle = '#ff0055';
+          ctx.fillRect(i * barW + 2, height - peakHold[i] - 2, barW - 4, 2);
+        }
+      }
+
+      function drawRadial3D(ctx, width, height, freq) {
+        const cx = width / 2, cy = height / 2, baseR = 25;
+        for (let i = 0; i < 36; i++) {
+          let angle = (i / 36) * Math.PI * 2;
+          let len = (freq[i * 2] / 255) * 50;
+          ctx.strokeStyle = `hsl(${(i * 10 + rainbowHue) % 360}, 100%, 50%)`;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(angle) * baseR, cy + Math.sin(angle) * baseR);
+          ctx.lineTo(cx + Math.cos(angle) * (baseR + len), cy + Math.sin(angle) * (baseR + len));
+          ctx.stroke();
+        }
+      }
+
+      function drawParticleCloud(ctx, width, height, freqL, freqR) {
+        const count = 40;
+        for (let i = 0; i < count; i++) {
+          let val = freqL[i] || 50;
+          let rx = (i / count) * width;
+          let ry = height / 2 + Math.sin(i + rainbowHue * 0.1) * (val / 3);
+          let size = (val / 255) * 8 + 2;
+          ctx.fillStyle = `hsl(${(i * 9 + rainbowHue) % 360}, 100%, 65%)`;
+          ctx.beginPath();
+          ctx.arc(rx, ry, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawVUMeter(ctx, width, height, freqL, freqR) {
+        const mid = width / 2;
+        let avgL = freqL.reduce((a, b) => a + b, 0) / freqL.length;
+        let avgR = freqR.reduce((a, b) => a + b, 0) / freqR.length;
+        let wL = (avgL / 255) * (mid - 20), wR = (avgR / 255) * (mid - 20);
+
+        ctx.fillStyle = '#ff3366';
+        ctx.fillRect(mid - wL, 40, wL, 30);
+        ctx.fillStyle = '#33ccff';
+        ctx.fillRect(mid, 90, wR, 30);
+
+        ctx.font = '10px monospace';
+        ctx.fillStyle = '#fff';
+        ctx.fillText('LEFT VU', 20, 60);
+        ctx.fillText('RIGHT VU', width - 70, 110);
+      }
+
+      /* 5. Audio Recording (MP3 Format) */
+      let audioRec = null, audioChunks = [];
+
+      function toggleAudioRecord() {
         const audio = document.getElementById('radio-player');
-        const status = document.getElementById('radio-status');
+        const btn = document.getElementById('recBtn');
+        const status = document.getElementById('recStatus');
+        const saveBtn = document.getElementById('audioSave');
 
-        if (!audio.src) return alert('먼저 오디오를 재생하세요.');
+        if (!audio.src) return alert('Please play a radio stream first.');
 
-        const stream = audio.captureStream ? audio.captureStream() : null;
-        if (!stream) return alert('오디오 캡처를 지원하지 않습니다.');
+        if (!audioRec || audioRec.state === 'inactive') {
+          const stream = audio.captureStream ? audio.captureStream() : null;
+          if (!stream) return alert('Audio capture is not supported in this browser.');
 
-        radioChunks = [];
-        radioRec = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+          audioChunks = [];
+          audioRec = new MediaRecorder(stream);
+          audioRec.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+          audioRec.onstop = () => {
+            const blob = new Blob(audioChunks, { type: 'audio/mp3' });
+            saveBtn.href = URL.createObjectURL(blob);
+            saveBtn.style.display = 'inline-block';
+            status.innerText = 'Recording completed! Click save.';
+          };
 
-        radioRec.ondataavailable = (e) => {
-          if (e.data.size > 0) radioChunks.push(e.data);
-        };
-        radioRec.onstop = () => {
-          const blob = new Blob(radioChunks, { type: 'audio/webm' });
-          const link = document.getElementById('radio-save');
-          link.href = URL.createObjectURL(blob);
-          link.style.display = 'inline-block';
-          status.textContent = 'Recording ready';
-        };
-
-        radioRec.start();
-        document.getElementById('rec-radio-start').disabled = true;
-        document.getElementById('rec-radio-stop').disabled = false;
-        status.textContent = 'Recording...';
-      }
-
-      function stopRadioRec() {
-        if (radioRec && radioRec.state !== 'inactive') radioRec.stop();
-        document.getElementById('rec-radio-start').disabled = false;
-        document.getElementById('rec-radio-stop').disabled = true;
-      }
-
-      /* ---------------------------
-   VIDEO PLAYER (Proxy & HLS.js)
----------------------------- */
-      let hlsEngine = null;
-
-      function loadVideo() {
-        const rawUrl = document.getElementById('video-url').value.trim();
-        const video = document.getElementById('video-player');
-
-        if (!rawUrl) return;
-
-        if (hlsEngine) hlsEngine.destroy();
-
-        // 일반 mp4 등 프록시가 필요 없는 확장자인 경우 직접 연결, M3U8인 경우 server.js 프록시 우회 주소 생성
-        let targetUrl = rawUrl;
-        if (rawUrl.includes('.m3u8')) {
-          targetUrl = PROXY_BASE_URL + encodeURIComponent(rawUrl);
-        }
-
-        if (Hls.isSupported() && rawUrl.includes('.m3u8')) {
-          hlsEngine = new Hls();
-          hlsEngine.loadSource(targetUrl);
-          hlsEngine.attachMedia(video);
-          hlsEngine.on(Hls.Events.MANIFEST_PARSED, () =>
-            video.play().catch((e) => console.error(e)),
-          );
+          audioRec.start();
+          btn.innerText = 'Stop Record';
+          btn.style.background = '#d32f2f';
+          saveBtn.style.display = 'none';
+          status.innerText = 'Recording audio...';
         } else {
-          video.src = targetUrl;
-          video.play().catch((e) => console.error(e));
+          audioRec.stop();
+          btn.innerText = 'Start Record';
+          btn.style.background = 'var(--accent-color)';
         }
       }
 
-      let videoRec = null,
-        videoChunks = [];
-
-      function startVideoRec() {
-        const video = document.getElementById('video-player');
-        const stream = video.captureStream ? video.captureStream() : null;
-
-        if (!stream) return alert('비디오 캡처를 지원하지 않습니다.');
-
-        videoChunks = [];
-        videoRec = new MediaRecorder(stream, { mimeType: 'video/webm' });
-
-        videoRec.ondataavailable = (e) => {
-          if (e.data.size > 0) videoChunks.push(e.data);
-        };
-        videoRec.onstop = () => {
-          const blob = new Blob(videoChunks, { type: 'video/webm' });
-          const link = document.getElementById('video-save');
-          link.href = URL.createObjectURL(blob);
-          link.style.display = 'inline-block';
-        };
-
-        videoRec.start();
-        document.getElementById('rec-video-start').disabled = true;
-        document.getElementById('rec-video-stop').disabled = false;
-      }
-
-      function stopVideoRec() {
-        if (videoRec && videoRec.state !== 'inactive') videoRec.stop();
-        document.getElementById('rec-video-start').disabled = false;
-        document.getElementById('rec-video-stop').disabled = true;
-      }
+      window.onload = () => {
+        loadUserPresets();
+        clearCanvas();
+        openPromoPopup();
+      };
     </script>
   </body>
 </html>
