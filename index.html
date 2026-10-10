@@ -260,7 +260,7 @@
     <div class="win11-window">
       <div class="win-header">
         <div>📻 Internet Radio Player</div><button id="install-app-button" class="btn" hidden onclick="installRadioApp()" style="font-size:10px;padding:3px 6px" title="앱 설치">⬇ 설치</button>
-        <div class="header-actions"><button class="qr-icon-btn" type="button" onclick="openAudioModal()" title="음색·증폭 설정" aria-label="음색·증폭 설정">♫</button><button class="qr-icon-btn" type="button" onclick="openQRModal()" aria-label="QR 코드 보기" title="QR 코드 보기">▦</button><span style="font-size:10px;opacity:.7">v2.0</span></div>
+        <div class="header-actions"><select id="ui-language" aria-label="Menu language" title="Menu language" onchange="setUILanguage(this.value)" style="width:62px;flex:none;padding:3px;font-size:11px;background:#1e1e24;color:white;border:1px solid #555;border-radius:4px"><option value="en">EN</option><option value="ko">한국어</option></select><button class="qr-icon-btn" type="button" onclick="openAudioModal()" title="음색·증폭 설정" aria-label="음색·증폭 설정">♫</button><button class="qr-icon-btn" type="button" onclick="openQRModal()" aria-label="QR 코드 보기" title="QR 코드 보기">▦</button><span style="font-size:10px;opacity:.7">v2.1</span></div>
       </div>
 
       <div class="win-body">
@@ -962,6 +962,40 @@ async function installRadioApp() {
   deferredInstallPrompt = null;
   document.getElementById('install-app-button').hidden = true;
 }
+</script>
+
+<script>
+/* Bilingual interface: language setting persists on this device. */
+const UI_EN = {"-- 지역 / 장르별 방송국 검색 --": "-- Search by region / genre --", "🇺🇸 미국 주요 도시": "🇺🇸 Major US Cities", "🇪🇺 유럽 주요 도시": "🇪🇺 Major European Cities", "🇰🇷 한국 방송": "🇰🇷 Korean Stations", "🎵 감성 음악": "🎵 Mood & Music", "Radio Browser + 한국 FM 방송 목록 동시 검색 · 한국 FM은 외부 사이트에서 재생": "Search Radio Browser + Korean FM listings · Korean FM opens an external site", "도시, 방송국 또는 음악 장르를 검색하세요.": "Search for a city, station or music genre.", "음색 프리셋": "Tone Preset", "스펙트럼 표시 균형": "Spectrum Display Balance", "기본값 복원": "Reset Defaults", "증폭 시 음질 왜곡을 줄이기 위해 소프트 리미터를 적용합니다. 외부 방송 스트림의 CORS 정책에 따라 EQ·녹음 기능이 제한될 수 있습니다.": "A soft limiter helps reduce distortion. EQ and recording may be limited by external stream CORS policies.", "📱 QR 코드 · 사이트 공유": "📱 QR Codes · Share Sites", "앱 주소 열기": "Open App URL", "사이트 열기": "Open Website", "🔒 AI Translator · 비공개": "🔒 AI Translator · Private", "확인": "Unlock", "잠금": "Lock", "비밀번호 입력 후 QR 코드가 표시됩니다.": "Enter the PIN to reveal the QR code.", "비밀번호는 이 앱의 QR 표시만 제한하며, 사이트 자체 접속을 차단하지 않습니다.": "The PIN only hides the QR code in this app; it does not protect the external website.", "비공개 QR 코드가 표시되었습니다.": "Private QR code unlocked.", "Radio Player QR은 현재 접속한 앱 주소로 생성됩니다.": "The Radio Player QR uses the current app URL.", "도시, 방송국, 음악 장르 검색 (Seattle, Berlin, KBS, Jazz)": "Search city, station, genre (Seattle, Berlin, KBS, Jazz)", "비밀번호": "PIN", "음색·증폭 설정": "Audio tone & amplifier", "QR 코드 보기": "View QR codes", "닫기": "Close", "앱 설치": "Install app", "Natural / 원음": "Natural / 원음", "Voice Clarity / 음성 선명": "Voice Clarity / 음성 선명"};
+const UI_KO = {"Please select a radio station...": "방송국을 선택하세요...", "-- Saved User Presets --": "-- 저장된 즐겨찾기 --", "Delete": "삭제", "Search": "검색", "📊 EQ Visualizer (12 Options):": "📊 EQ 시각화 (12종):", "🎙️ Audio Recording": "🎙️ 오디오 녹음", "Standby": "대기 중", "Start Record": "녹음 시작", "Stop Record": "녹음 중지", "Save MP3": "MP3 저장", "✈️ Trip.com Main Special Offer": "✈️ Trip.com 특별 혜택", "Lowest Flights & Hotels Booking": "항공권 및 호텔 예약", "Visit ➔": "방문 ➔", "🌴 Hengqin Promo Special Deals": "🌴 헝친 특별 할인", "Exclusive Discounts & Travel Pass": "특별 할인 및 여행 패스", "Explore ➔": "자세히 ➔", "🎚 Audio Tone & Amplifier": "🎚 음색 및 증폭"};
+const UI_BASE = new WeakMap();
+let uiLang = localStorage.getItem('radio_ui_language') === 'ko' ? 'ko' : 'en';
+function translateUI(root=document) {
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  for(const node of nodes){
+    if(node.parentElement?.closest('script,style'))continue;
+    const current=node.nodeValue, trimmed=current.trim();
+    if(!trimmed)continue;
+    let base=UI_BASE.get(node);
+    if(base===undefined){base=trimmed;UI_BASE.set(node,base)}
+    const translated=(uiLang==='en'?UI_EN:UI_KO)[base]||base;
+    if(trimmed!==translated)node.nodeValue=current.replace(trimmed,translated);
+  }
+  for(const el of root.querySelectorAll?.('[placeholder],[title],[aria-label]')||[]){
+    for(const attr of ['placeholder','title','aria-label']){
+      if(!el.hasAttribute(attr))continue;
+      const key='uiBase'+attr;
+      if(!el.dataset[key])el.dataset[key]=el.getAttribute(attr);
+      const base=el.dataset[key];
+      const val=(uiLang==='en'?UI_EN:UI_KO)[base]||base;
+      if(el.getAttribute(attr)!==val)el.setAttribute(attr,val);
+    }
+  }
+  document.documentElement.lang=uiLang;
+}
+function setUILanguage(lang){uiLang=lang==='ko'?'ko':'en';localStorage.setItem('radio_ui_language',uiLang);translateUI();}
+window.addEventListener('load',()=>{document.getElementById('ui-language').value=uiLang;translateUI();const obs=new MutationObserver(()=>{obs.disconnect();translateUI();obs.observe(document.body,{childList:true,subtree:true,characterData:true})});obs.observe(document.body,{childList:true,subtree:true,characterData:true});});
 </script>
 </body>
 </html>
