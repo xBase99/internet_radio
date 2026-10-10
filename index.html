@@ -3,7 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Internet Radio Player v1.5</title>
+    <meta name="theme-color" content="#10141d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <title>Internet Radio Player v2.0</title>
     <style>
       :root {
         --win-bg: rgba(24, 24, 28, 0.95);
@@ -226,13 +231,36 @@
         margin-bottom: 8px;
         border: 1px solid rgba(255, 255, 255, 0.2);
       }
-    </style>
+
+      .qr-section { margin: 10px 0; padding: 10px; border: 1px solid var(--win-border); border-radius: 7px; background:#171a22; font-size:12px; }
+      .qr-row { display:flex; gap:8px; flex-wrap:wrap; justify-content:space-around; margin-top:10px; }
+      .qr-card { width:140px; text-align:center; overflow-wrap:anywhere; }
+      .qr-card img { width:116px; height:116px; background:white; padding:5px; border-radius:5px; }
+      .qr-card a { color:#75bdff; font-size:11px; }
+      .qr-section input { max-width:140px; }
+      .qr-hint { color:#aaa; font-size:11px; margin-top:5px; }
+
+      .header-actions { display:flex; align-items:center; gap:9px; }
+      .qr-icon-btn { background:transparent; color:#fff; border:1px solid #555; border-radius:5px; cursor:pointer; font-size:19px; line-height:23px; width:30px; height:27px; }
+      .qr-icon-btn:hover { background:#0078d4; }
+      .qr-modal[hidden], .qr-row[hidden] { display:none !important; }
+      .qr-modal { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.78); display:flex; align-items:center; justify-content:center; padding:15px; }
+      .qr-dialog { width:min(100%,430px); max-height:90vh; overflow:auto; background:#1c1c24; border:1px solid #555; border-radius:12px; padding:15px; box-shadow:0 15px 50px #000; }
+      .qr-dialog-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+      .qr-private { margin-top:12px; border-top:1px solid #444; padding-top:12px; }
+      .qr-card { display:flex; flex-direction:column; align-items:center; gap:6px; }
+      .qr-card img { display:block; }
+    
+      .audio-modal[hidden]{display:none!important}.audio-modal{position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:15px}
+      .audio-dialog{width:min(100%,430px);max-height:90vh;overflow:auto;background:#1c1c24;border:1px solid #555;border-radius:12px;padding:16px}
+      .audio-line{display:flex;align-items:center;gap:12px;margin:11px 0;font-size:12px}.audio-line label{flex:1}.audio-line input[type=range]{width:48%}.audio-line output{width:55px;text-align:right}.audio-dialog select{width:100%;margin:8px 0}.audio-dialog small{color:#aaa}
+</style>
   </head>
   <body oncontextmenu="return false;" ondragstart="return false;">
     <div class="win11-window">
       <div class="win-header">
-        <div>📻 Internet Radio Player</div>
-        <div style="font-size: 10px; opacity: 0.6">v1.5</div>
+        <div>📻 Internet Radio Player</div><button id="install-app-button" class="btn" hidden onclick="installRadioApp()" style="font-size:10px;padding:3px 6px" title="앱 설치">⬇ 설치</button>
+        <div class="header-actions"><button class="qr-icon-btn" type="button" onclick="openAudioModal()" title="음색·증폭 설정" aria-label="음색·증폭 설정">♫</button><button class="qr-icon-btn" type="button" onclick="openQRModal()" aria-label="QR 코드 보기" title="QR 코드 보기">▦</button><span style="font-size:10px;opacity:.7">v2.0</span></div>
       </div>
 
       <div class="win-body">
@@ -245,25 +273,54 @@
         <!-- Preset Select -->
         <div class="input-group">
           <select id="radio-preset" onchange="selectRadioChannel(this.value)">
-            <option value="">-- Select Major Preset Station --</option>
-            <optgroup label="🌲 Seattle Local Stations">
-              <option value="KEXP">🇺🇸 KEXP 90.3 FM (Seattle Ind/Rock)</option>
-              <option value="KNKX">🇺🇸 KNKX 88.5 FM (Seattle Jazz & News)</option>
-              <option value="KUOW">🇺🇸 KUOW 94.9 FM (Seattle NPR News)</option>
-              <option value="KING FM">🇺🇸 KING FM 98.1 (Seattle Classical)</option>
-              <option value="KEXP Seattle">🇺🇸 KEXP World Wide Stream</option>
+            <option value="">-- 지역 / 장르별 방송국 검색 --</option>
+            <optgroup label="🇺🇸 미국 주요 도시">
+              <option value="Seattle">Seattle 시애틀</option>
+              <option value="New York">New York 뉴욕</option>
+              <option value="Los Angeles">Los Angeles 로스앤젤레스</option>
+              <option value="Chicago">Chicago 시카고</option>
+              <option value="San Francisco">San Francisco 샌프란시스코</option>
+              <option value="Boston">Boston 보스턴</option>
+              <option value="Miami">Miami 마이애미</option>
+              <option value="Washington DC">Washington D.C.</option>
+              <option value="Houston">Houston 휴스턴</option>
+              <option value="Atlanta">Atlanta 애틀랜타</option>
             </optgroup>
-            <optgroup label="🌐 Global Stations">
-              <option value="BBC Radio 1">🇬🇧 BBC Radio 1 (UK Pop)</option>
-              <option value="Capital FM">🇬🇧 Capital FM London (UK Top40)</option>
-              <option value="Jazz FM">🇬🇧 Jazz FM (UK Jazz)</option>
-              <option value="WNYC">🇺🇸 WNYC FM New York (US)</option>
+            <optgroup label="🇪🇺 유럽 주요 도시">
+              <option value="London">London 런던</option>
+              <option value="Paris">Paris 파리</option>
+              <option value="Berlin">Berlin 베를린</option>
+              <option value="Rome">Rome 로마</option>
+              <option value="Madrid">Madrid 마드리드</option>
+              <option value="Barcelona">Barcelona 바르셀로나</option>
+              <option value="Amsterdam">Amsterdam 암스테르담</option>
+              <option value="Vienna">Vienna 빈</option>
+              <option value="Zurich">Zurich 취리히</option>
+              <option value="Lisbon">Lisbon 리스본</option>
             </optgroup>
-            <optgroup label="🇰🇷 Korea Stations">
-              <option value="KBS">KBS Radio (KBS 라디오)</option>
-              <option value="MBC">MBC Radio (MBC 라디오)</option>
-              <option value="SBS">SBS Power FM (SBS 파워FM)</option>
-              <option value="CBS">CBS Radio (CBS 기독교방송)</option>
+            <optgroup label="🇰🇷 한국 방송">
+              <option value="KBS">KBS</option>
+              <option value="MBC">MBC</option>
+              <option value="SBS">SBS</option>
+              <option value="CBS">CBS</option>
+              <option value="YTN">YTN</option>
+              <option value="EBS">EBS</option>
+              <option value="TBS">TBS</option>
+              <option value="국악방송">국악방송</option>
+            </optgroup>
+            <optgroup label="🎵 감성 음악">
+              <option value="Soft Rock">Soft Rock / 소프트 록</option>
+              <option value="Ballad">Ballad / 발라드</option>
+              <option value="Easy Listening">Easy Listening / 편안한 음악</option>
+              <option value="Jazz">Jazz / 재즈</option>
+              <option value="Smooth Jazz">Smooth Jazz / 스무스 재즈</option>
+              <option value="Chillout">Chillout / 휴식 음악</option>
+              <option value="Lofi">Lo-fi / 로파이</option>
+              <option value="Acoustic">Acoustic / 어쿠스틱</option>
+              <option value="Classical">Classical / 클래식</option>
+              <option value="Oldies">Oldies / 추억의 팝</option>
+              <option value="Love Songs">Love Songs / 러브송</option>
+              <option value="Bossa Nova">Bossa Nova / 보사노바</option>
             </optgroup>
           </select>
         </div>
@@ -278,20 +335,21 @@
 
         <!-- Station Search Box -->
         <div class="input-group">
-          <input id="radio-kw" type="text" value="" placeholder="Enter station keyword (e.g. KEXP, Jazz, KBS)..." />
+          <input id="radio-kw" type="text" value="" placeholder="도시, 방송국, 음악 장르 검색 (Seattle, Berlin, KBS, Jazz)" />
           <button class="btn btn-accent" onclick="searchRadio()">Search</button>
         </div>
 
         <!-- Station List -->
-        <div id="radio-list">Select or search for a radio station.</div>
+        <div style="font-size:10px;color:#aaa;margin:-2px 0 6px">Radio Browser + 한국 FM 방송 목록 동시 검색 · 한국 FM은 외부 사이트에서 재생</div>
+        <div id="radio-list">도시, 방송국 또는 음악 장르를 검색하세요.</div>
 
         <!-- Audio Player -->
         <audio id="radio-player" controls crossorigin="anonymous"></audio>
 
-        <!-- EQ Visualizer Display (8 Options) -->
+        <!-- EQ Visualizer Display (12 Options) -->
         <div class="scope-container">
           <div class="scope-toolbar">
-            <div>📊 EQ Visualizer (8 Options):</div>
+            <div>📊 EQ Visualizer (12 Options):</div>
             <select id="scope-mode" onchange="setScopeMode(this.value)" style="padding: 2px 6px; font-size: 11px; background: #1a1a1d; color: #fff;">
               <option value="no-eq">⚡ 1. NO EQ (Low Power / Legacy Device)</option>
               <option value="combined-wave">🌊 2. 2CH Combined Waveform (L/R Mix)</option>
@@ -300,7 +358,11 @@
               <option value="cyber-bars">🎛 5. Cyberpunk Peak Bars Spectrum</option>
               <option value="radial-3d">🎯 6. 3D Radial Circular Beam</option>
               <option value="particle-cloud">🌌 7. Sci-Fi Particle Wave Cloud</option>
-              <option value="vu-meter">📼 8. Mirror Stereo VU Meter</option>
+              <option value="spectrum32">📊 8. 32-Band Spectrum Analyzer</option>
+              <option value="stereo-spectrum">🎚 9. Stereo Spectrum L/R</option>
+              <option value="smooth-curve">🌊 10. Smooth Spectrum Curve</option>
+              <option value="retro">🟢 11. Retro Analog Analyzer</option>
+              <option value="waterfall">🌈 12. Spectrum Waterfall</option>
             </select>
           </div>
           <canvas id="scopeCanvas"></canvas>
@@ -317,6 +379,7 @@
             <a id="audioSave" class="btn" style="display: none; background: #388e3c; color: #fff; text-decoration: none;" download="radio_recording.mp3">Save MP3</a>
           </div>
         </div>
+
 
         <!-- Trip.com Sponsor Link 1 -->
         <a href="https://www.trip.com/?Allianceid=8796691&SID=320666228&trip_sub1=&trip_sub3=D18303749&linkhub_token=sl_zGQ0YJsVIV2" target="_blank" class="promo-banner">
@@ -338,6 +401,28 @@
       </div>
     </div>
 
+    <div class="audio-modal" id="audio-modal" hidden onclick="if(event.target===this)closeAudioModal()" role="dialog" aria-modal="true" aria-label="음색 및 증폭 설정">
+      <div class="audio-dialog"><div class="qr-dialog-head"><strong>🎚 Audio Tone &amp; Amplifier</strong><button class="btn" onclick="closeAudioModal()">✕</button></div>
+      <label for="tone-preset">음색 프리셋</label><select id="tone-preset" onchange="applyTonePreset(this.value)"><option value="flat">Natural / 원음</option><option value="voice">Voice Clarity / 음성 선명</option><option value="warm">Warm Voice / 따뜻한 음색</option><option value="music">Music / 음악</option></select>
+      <div id="audio-sliders"></div><label class="audio-line"><input type="checkbox" id="auto-gain" onchange="updateAudioSettings()"> Auto Gain / 자동 음량 조정</label>
+      <label for="freq-balance">스펙트럼 표시 균형</label><select id="freq-balance" onchange="updateAudioSettings()"><option value="balanced">Balanced / 균형</option><option value="natural">Natural / 원본</option><option value="bass">Bass Focus / 저음 강조</option></select>
+      <button class="btn" onclick="resetAudioSettings()">기본값 복원</button><p><small>증폭 시 음질 왜곡을 줄이기 위해 소프트 리미터를 적용합니다. 외부 방송 스트림의 CORS 정책에 따라 EQ·녹음 기능이 제한될 수 있습니다.</small></p></div></div>
+<div id="qr-modal" class="qr-modal" hidden onclick="if(event.target===this)closeQRModal()" role="dialog" aria-modal="true" aria-label="QR 코드 공유">
+      <div class="qr-dialog">
+        <div class="qr-dialog-head"><strong>📱 QR 코드 · 사이트 공유</strong><button class="btn" onclick="closeQRModal()" aria-label="닫기">✕</button></div>
+        <div class="qr-row">
+          <div class="qr-card"><strong>📻 Radio Player</strong><img id="qr-radio" alt="현재 라디오 앱 QR 코드"><a id="radio-share-link" target="_blank" rel="noopener noreferrer">앱 주소 열기</a></div>
+          <div class="qr-card"><strong>4-Lang Translator</strong><img id="qr-four" alt="4-Lang Translator QR 코드"><a href="https://xbase99.github.io/4-Lang-Translator/" target="_blank" rel="noopener noreferrer">사이트 열기</a></div>
+        </div>
+        <p class="qr-hint" id="radio-qr-note"></p>
+        <div class="qr-private"><strong>🔒 AI Translator · 비공개</strong>
+          <div class="input-group" style="margin-top:8px"><input type="password" id="friend-pin" inputmode="numeric" placeholder="비밀번호" autocomplete="off" onkeydown="if(event.key==='Enter')unlockFriendQR()"><button class="btn btn-accent" onclick="unlockFriendQR()">확인</button><button class="btn" onclick="lockFriendQR()">잠금</button></div>
+          <div id="friend-pin-status" class="qr-hint" role="status">비밀번호 입력 후 QR 코드가 표시됩니다.</div>
+          <div id="friend-qr-list" class="qr-row" hidden></div>
+        </div>
+        <p class="qr-hint">비밀번호는 이 앱의 QR 표시만 제한하며, 사이트 자체 접속을 차단하지 않습니다.</p>
+      </div>
+    </div>
     <script>
       /* Security: Block shortcuts for DevTools */
       document.addEventListener('keydown', function (e) {
@@ -403,49 +488,84 @@
         searchRadio();
       }
 
+      const koreaFmPage = 'https://extrememanual.net/tools/korea-fm-radio-live-player';
+      const koreaFmStations = [
+        'KBS1 라디오','KBS2 라디오 해피FM','KBS3 라디오 사랑의 소리','KBS1 FM 클래식FM',
+        'KBS2 FM 쿨FM','KBS 한민족방송','SBS 러브FM','SBS 파워FM','SBS 고릴라M',
+        'MBC 표준FM','MBC FM4U','CBS 표준FM','CBS 음악FM','YTN 라디오',
+        'OBS 라디오','TBS FM','TBS eFM','국방FM','국악방송'
+      ];
+      const koreaAliases = { '한국':'korea', '서울':'korea', '라디오':'korea', '음악':'music' };
+      let latestSearch = 0;
+      function addStationRow(list, title, source, onClick) {
+        const row = document.createElement('div');
+        row.className = 'station-item';
+        const label = document.createElement('span');
+        label.textContent = '📻 ' + title;
+        const tag = document.createElement('span');
+        tag.textContent = source;
+        tag.style.cssText = 'font-size:10px;color:#8fc9ff;margin-left:8px;flex-shrink:0';
+        row.append(label, tag);
+        row.onclick = onClick;
+        list.appendChild(row);
+        return row;
+      }
       async function searchRadio() {
-        const kwInput = document.getElementById('radio-kw');
-        const kw = kwInput.value.trim();
+        const kw = document.getElementById('radio-kw').value.trim();
         const list = document.getElementById('radio-list');
         if (!kw) return;
-
-        list.textContent = 'Searching stations...';
+        const searchId = ++latestSearch;
+        list.replaceChildren();
+        const normalized = kw.toLocaleLowerCase();
+        const isKorea = ['korea','korean','한국','서울','seoul'].some(x => normalized.includes(x));
+        const koreanMatches = koreaFmStations.filter(name => isKorea || name.toLocaleLowerCase().includes(normalized));
+        if (koreanMatches.length) {
+          const heading = document.createElement('div');
+          heading.textContent = '🇰🇷 한국 FM · 익스트림 매뉴얼 (' + koreanMatches.length + ')';
+          heading.style.cssText = 'font-weight:bold;padding:6px;color:#e6e6e6';
+          list.appendChild(heading);
+          koreanMatches.forEach(name => addStationRow(list, name, '외부 재생 ↗', () => {
+            window.open(koreaFmPage, '_blank', 'noopener,noreferrer');
+          }));
+        }
+        const heading = document.createElement('div');
+        heading.textContent = '🌐 Radio Browser · 검색 중...';
+        heading.style.cssText = 'font-weight:bold;padding:6px;color:#e6e6e6';
+        list.appendChild(heading);
         try {
-          const res = await fetch('https://de1.api.radio-browser.info/json/stations/search?limit=15&hidebroken=true&name=' + encodeURIComponent(kw));
-          const stations = await res.json();
-          if (!stations.length) {
-            list.textContent = 'No stations found.';
-            return;
+          // City names are matched by the station's city/state metadata where available.
+          const cityTerms = ['Seattle','New York','Los Angeles','Chicago','San Francisco','Boston','Miami','Washington DC','Houston','Atlanta','London','Paris','Berlin','Rome','Madrid','Barcelona','Amsterdam','Vienna','Zurich','Lisbon'];
+          const isCity = cityTerms.some(city => city.toLowerCase() === normalized);
+          const params = new URLSearchParams({ limit:'30', hidebroken:'true', order:'votes', reverse:'true' });
+          params.set(isCity ? 'state' : 'name', kw);
+          const endpoint = 'https://de1.api.radio-browser.info/json/stations/search?' + params;
+          let response = await fetch(endpoint, { signal: AbortSignal.timeout(12000) });
+          if (!response.ok) throw new Error('Search unavailable');
+          let stations = await response.json();
+          if (isCity && !stations.length) {
+            params.delete('state'); params.set('name', kw);
+            response = await fetch('https://de1.api.radio-browser.info/json/stations/search?' + params, { signal: AbortSignal.timeout(12000) });
+            if (!response.ok) throw new Error('Search unavailable');
+            stations = await response.json();
           }
-          list.innerHTML = '';
-          stations.forEach((st, idx) => {
-            const div = document.createElement('div');
-            div.className = 'station-item';
-            div.id = `station-${idx}`;
-            
-            const titleSpan = document.createElement('span');
-            titleSpan.textContent = `📻 ${st.name} [${st.countrycode || 'Global'}]`;
-            
-            const statusSpan = document.createElement('span');
-            statusSpan.style.fontSize = '10px';
-            statusSpan.style.opacity = '0.7';
-
-            div.appendChild(titleSpan);
-            div.appendChild(statusSpan);
-
-            div.onclick = () => {
-              if (div.classList.contains('rejected')) {
-                alert('Connection to this station was rejected or unavailable.');
-                return;
-              }
-              playRadio(st.url_resolved, st.name, div, statusSpan);
-            };
-            list.appendChild(div);
+          if (searchId !== latestSearch) return;
+          heading.textContent = '🌐 Radio Browser (' + stations.length + ')';
+          if (!stations.length) addStationRow(list, '검색 결과 없음', '', () => {});
+          stations.forEach(st => {
+            if (!st.url_resolved && !st.url) return;
+            const row = addStationRow(list, st.name + ' [' + (st.countrycode || 'Global') + ']', '앱 재생 ▶', () => {
+              if (!row.classList.contains('rejected')) playRadio(st.url_resolved || st.url, st.name, row, tag);
+            });
+            const tag = row.lastElementChild;
           });
-        } catch (e) {
-          list.textContent = 'Error occurred during search.';
+        } catch (err) {
+          if (searchId !== latestSearch) return;
+          heading.textContent = '🌐 Radio Browser · 연결 실패 (한국 FM 목록은 사용 가능)';
         }
       }
+      document.getElementById('radio-kw').addEventListener('keydown', e => {
+        if (e.key === 'Enter') searchRadio();
+      });
 
       function playRadio(url, name, element = null, statusElement = null) {
         const player = document.getElementById('radio-player');
@@ -461,7 +581,7 @@
             if (statusElement) statusElement.textContent = '🟢 Playing';
 
             autoAddPreset(name, url);
-            if (currentScopeMode !== 'no-eq') initStereoEQ();
+            initStereoEQ();
           })
           .catch((err) => {
             console.error('Play rejected:', err);
@@ -478,9 +598,11 @@
       let audioCtx = null, sourceNode = null, analyserL = null, analyserR = null;
       let currentScopeMode = 'no-eq', animFrameId = null, rainbowHue = 0;
       let peakHold = new Array(32).fill(0);
+      let bassFilter, midFilter, trebleFilter, gainNode, compressor, waterfallHistory=[];
 
       function setScopeMode(mode) {
         currentScopeMode = mode;
+        if (mode !== 'waterfall') waterfallHistory=[];
         if (mode === 'no-eq') {
           if (animFrameId) cancelAnimationFrame(animFrameId);
           clearCanvas();
@@ -514,15 +636,22 @@
           const splitter = audioCtx.createChannelSplitter(2);
           analyserL = audioCtx.createAnalyser();
           analyserR = audioCtx.createAnalyser();
-          analyserL.fftSize = 256;
-          analyserR.fftSize = 256;
+          analyserL.fftSize = 2048;
+          analyserR.fftSize = 2048;
 
-          sourceNode.connect(splitter);
-          splitter.connect(analyserL, 0);
-          splitter.connect(analyserR, 1);
-          sourceNode.connect(audioCtx.destination);
+          bassFilter=audioCtx.createBiquadFilter();bassFilter.type='lowshelf';bassFilter.frequency.value=220;
+          midFilter=audioCtx.createBiquadFilter();midFilter.type='peaking';midFilter.frequency.value=1400;midFilter.Q.value=0.8;
+          trebleFilter=audioCtx.createBiquadFilter();trebleFilter.type='highshelf';trebleFilter.frequency.value=4000;
+          gainNode=audioCtx.createGain();compressor=audioCtx.createDynamicsCompressor();
+          compressor.threshold.value=-8;compressor.knee.value=6;compressor.ratio.value=12;compressor.attack.value=.003;compressor.release.value=.18;
+          sourceNode.connect(bassFilter);bassFilter.connect(midFilter);midFilter.connect(trebleFilter);trebleFilter.connect(gainNode);gainNode.connect(compressor);
+          compressor.connect(audioCtx.destination);
+          trebleFilter.connect(splitter);
+          splitter.connect(analyserL,0);splitter.connect(analyserR,1);
+          updateAudioSettings();
         }
 
+        if (audioCtx.state==='suspended') audioCtx.resume().catch(()=>{});
         if (animFrameId) cancelAnimationFrame(animFrameId);
 
         const freqL = new Uint8Array(analyserL.frequencyBinCount);
@@ -564,9 +693,11 @@
             case 'particle-cloud':
               drawParticleCloud(ctx, canvas.width, canvas.height, freqL, freqR);
               break;
-            case 'vu-meter':
-              drawVUMeter(ctx, canvas.width, canvas.height, freqL, freqR);
-              break;
+            case 'spectrum32': drawSpectrum(ctx,canvas.width,canvas.height,freqL,freqR,32,false);break;
+            case 'stereo-spectrum': drawSpectrum(ctx,canvas.width,canvas.height,freqL,freqR,24,true);break;
+            case 'smooth-curve': drawSmoothCurve(ctx,canvas.width,canvas.height,freqL,freqR);break;
+            case 'retro': drawRetro(ctx,canvas.width,canvas.height,freqL,freqR);break;
+            case 'waterfall': drawWaterfall(ctx,canvas.width,canvas.height,freqL,freqR);break;
           }
 
           animFrameId = requestAnimationFrame(renderFrame);
@@ -736,11 +867,101 @@
         }
       }
 
+
+      /* QR sharing: two public, one PIN-gated in this interface. */
+      function qrImageUrl(url) {
+        return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=' + encodeURIComponent(url);
+      }
+      function setupRadioQR() {
+        const url = window.location.href.split('#')[0];
+        document.getElementById('qr-radio').src = qrImageUrl(url);
+        document.getElementById('radio-share-link').href = url;
+        document.getElementById('qr-four').src = qrImageUrl('https://xbase99.github.io/4-Lang-Translator/');
+        document.getElementById('radio-qr-note').textContent =
+          (location.protocol === 'file:' || ['localhost','127.0.0.1'].includes(location.hostname))
+          ? '현재 앱 주소는 로컬 주소입니다. 다른 기기에서 접속하려면 공개 웹 주소로 배포하세요.'
+          : 'Radio Player QR은 현재 접속한 앱 주소로 생성됩니다.';
+      }
+      function openQRModal() {
+        lockFriendQR();
+        document.getElementById('qr-modal').hidden = false;
+      }
+      function closeQRModal() {
+        document.getElementById('qr-modal').hidden = true;
+        lockFriendQR();
+      }
+      function unlockFriendQR() {
+        const pin = document.getElementById('friend-pin');
+        const status = document.getElementById('friend-pin-status');
+        if (pin.value !== '2027') {
+          status.textContent = '비밀번호가 올바르지 않습니다.';
+          pin.value = '';
+          return;
+        }
+        pin.value = '';
+        const list = document.getElementById('friend-qr-list');
+        list.replaceChildren();
+        const card = document.createElement('div'); card.className = 'qr-card';
+        const title = document.createElement('strong'); title.textContent = 'AI Translator';
+        const img = document.createElement('img'); img.src = qrImageUrl('https://xbase99.github.io/AI-Translator/'); img.alt = 'AI Translator QR 코드';
+        const link = document.createElement('a'); link.href = 'https://xbase99.github.io/AI-Translator/'; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = '사이트 열기';
+        card.append(title,img,link); list.appendChild(card);
+        list.hidden = false;
+        status.textContent = '비공개 QR 코드가 표시되었습니다.';
+      }
+      function lockFriendQR() {
+        const list = document.getElementById('friend-qr-list');
+        list.hidden = true;
+        list.replaceChildren();
+        document.getElementById('friend-pin').value = '';
+        document.getElementById('friend-pin-status').textContent = '비밀번호 입력 후 QR 코드가 표시됩니다.';
+      }
+      document.addEventListener('keydown', e => { if(e.key === 'Escape') closeQRModal(); });
+
+
+      const audioConfig=[['bass','Bass',-12,12,0,'dB'],['mid','Mid',-12,12,0,'dB'],['treble','Treble',-12,12,0,'dB'],['amplifier','Amplifier',0,12,0,'dB'],['spectrum-level','Spectrum Level',10,200,65,'%']];
+      function initAudioControls(){const root=document.getElementById('audio-sliders');root.replaceChildren();for(const [id,name,min,max,def,unit] of audioConfig){const row=document.createElement('div');row.className='audio-line';const label=document.createElement('label');label.htmlFor=id;label.textContent=name;const slider=document.createElement('input');slider.type='range';slider.id=id;slider.min=min;slider.max=max;slider.value=def;slider.oninput=updateAudioSettings;const output=document.createElement('output');output.id=id+'-value';output.textContent=def+unit;row.append(label,slider,output);root.append(row)}try{const v=JSON.parse(localStorage.getItem('radio_audio_v19')||'{}');for(const [k,val] of Object.entries(v)){const el=document.getElementById(k);if(el){if(el.type==='checkbox')el.checked=!!val;else el.value=val}}}catch(e){}updateAudioSettings()}
+      function audioVal(id){return Number(document.getElementById(id)?.value||0)}
+      function updateAudioSettings(){for(const [id,,min,max,,unit] of audioConfig){const el=document.getElementById(id);const val=Math.max(min,Math.min(max,Number(el.value)||0));el.value=val;document.getElementById(id+'-value').textContent=val+unit}if(bassFilter){bassFilter.gain.value=audioVal('bass');midFilter.gain.value=audioVal('mid');trebleFilter.gain.value=audioVal('treble');gainNode.gain.setTargetAtTime(Math.pow(10,audioVal('amplifier')/20),audioCtx.currentTime,.03);compressor.threshold.value=document.getElementById('auto-gain').checked?-18:-8;compressor.ratio.value=document.getElementById('auto-gain').checked?4:12}const v={};for(const [id] of audioConfig)v[id]=audioVal(id);v['tone-preset']=document.getElementById('tone-preset').value;v['auto-gain']=document.getElementById('auto-gain').checked;v['freq-balance']=document.getElementById('freq-balance').value;localStorage.setItem('radio_audio_v19',JSON.stringify(v))}
+      function applyTonePreset(name){const presets={flat:[0,0,0],voice:[-3,4,3],warm:[3,1,-2],music:[3,0,2]};const vals=presets[name]||presets.flat;['bass','mid','treble'].forEach((id,i)=>document.getElementById(id).value=vals[i]);updateAudioSettings()}
+      function resetAudioSettings(){for(const [id,,, ,def] of audioConfig)document.getElementById(id).value=def;document.getElementById('tone-preset').value='flat';document.getElementById('auto-gain').checked=false;document.getElementById('freq-balance').value='balanced';updateAudioSettings()}
+      function openAudioModal(){document.getElementById('audio-modal').hidden=false}
+      function closeAudioModal(){document.getElementById('audio-modal').hidden=true}
+      function logBands(data,count){const sr=audioCtx?.sampleRate||44100,fft=analyserL?.fftSize||2048,nyq=sr/2;const result=[];for(let i=0;i<count;i++){const f1=40*Math.pow(nyq/40,i/count),f2=40*Math.pow(nyq/40,(i+1)/count);const lo=Math.max(0,Math.floor(f1*fft/sr)),hi=Math.min(data.length-1,Math.max(lo,Math.ceil(f2*fft/sr)));let sum=0;for(let j=lo;j<=hi;j++)sum+=data[j];let v=sum/(hi-lo+1)/255;const mode=document.getElementById('freq-balance')?.value||'balanced';if(mode==='balanced')v*=Math.pow(Math.max(f1,80)/500,.16);if(mode==='bass')v*=Math.pow(500/Math.max(f1,80),.12);result.push(Math.min(1,Math.max(0,v)*audioVal('spectrum-level')/65))}return result}
+      function drawSpectrum(ctx,w,h,l,r,count,stereo){const a=logBands(l,count),b=logBands(r,count),bw=w/count;for(let i=0;i<count;i++){const top=stereo?h/2:h,vl=stereo?a[i]:(a[i]+b[i])/2;ctx.fillStyle=`hsl(${195+i*155/count},95%,60%)`;ctx.fillRect(i*bw+1,top-vl*(top-8),Math.max(1,bw-2),vl*(top-8));if(stereo){ctx.fillStyle=`hsl(${320-i*120/count},95%,65%)`;ctx.fillRect(i*bw+1,h/2+3,Math.max(1,bw-2),b[i]*(h/2-8))}}}
+      function drawSmoothCurve(ctx,w,h,l,r){const a=logBands(l,64),b=logBands(r,64);for(const [arr,color] of [[a,'#00d9ff'],[b,'#ff5da9']]){ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;arr.forEach((v,i)=>{const x=i*w/(arr.length-1),y=h-8-v*(h-20);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke()}}
+      function drawRetro(ctx,w,h,l,r){ctx.fillStyle='#041409';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#144d22';ctx.lineWidth=1;for(let y=0;y<h;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}const a=logBands(l,64),b=logBands(r,64);ctx.strokeStyle='#6aff84';ctx.shadowColor='#28ff5b';ctx.shadowBlur=9;ctx.lineWidth=2;ctx.beginPath();a.forEach((v,i)=>{const x=i*w/63,y=h-10-(v+b[i])/2*(h-20);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.shadowBlur=0}
+      function drawWaterfall(ctx,w,h,l,r){const a=logBands(l,80),b=logBands(r,80);waterfallHistory.unshift(a.map((v,i)=>(v+b[i])/2));if(waterfallHistory.length>Math.ceil(h/3))waterfallHistory.pop();const bw=w/80,bh=3;waterfallHistory.forEach((line,row)=>line.forEach((v,i)=>{ctx.fillStyle=`hsl(${240-Math.min(1,v)*240},95%,${12+Math.min(1,v)*55}%)`;ctx.fillRect(i*bw,row*bh,Math.ceil(bw),bh)}))}
+
       window.onload = () => {
+        initAudioControls();
+        setupRadioQR();
         loadUserPresets();
         clearCanvas();
         openPromoPopup();
       };
     </script>
-  </body>
+  <script>
+// Installable web app: the shell can be cached, but live radio requires a connection.
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(console.warn));
+}
+let deferredInstallPrompt;
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault(); deferredInstallPrompt = event;
+  const btn = document.getElementById('install-app-button');
+  if (btn) btn.hidden = false;
+});
+async function installRadioApp() {
+  if (!deferredInstallPrompt) {
+    alert('브라우저 메뉴에서 홈 화면에 추가 또는 앱 설치를 선택하세요.');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  document.getElementById('install-app-button').hidden = true;
+}
+</script>
+</body>
 </html>
